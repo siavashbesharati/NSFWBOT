@@ -28,12 +28,31 @@ class Database:
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 free_messages_used INTEGER DEFAULT 0,
+                free_text_messages_used INTEGER DEFAULT 0,
+                free_image_messages_used INTEGER DEFAULT 0,
+                free_video_messages_used INTEGER DEFAULT 0,
                 text_messages_left INTEGER DEFAULT 0,
                 image_messages_left INTEGER DEFAULT 0,
                 video_messages_left INTEGER DEFAULT 0,
                 total_spent REAL DEFAULT 0.0
             )
         ''')
+        
+        # Add new columns if they don't exist (for existing databases)
+        try:
+            cursor.execute('ALTER TABLE users ADD COLUMN free_text_messages_used INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute('ALTER TABLE users ADD COLUMN free_image_messages_used INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute('ALTER TABLE users ADD COLUMN free_video_messages_used INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
         
         # Packages table
         cursor.execute('''
@@ -208,10 +227,20 @@ class Database:
             conn.close()
             return False
         
-        # Check if user has free messages left
-        if user['free_messages_used'] < int(self.get_setting('free_messages', '1')):
-            cursor.execute('''
-                UPDATE users SET free_messages_used = free_messages_used + 1
+        # Get free message settings from database
+        free_settings = self.get_free_message_settings()
+        
+        # Check if user has free messages left for this specific type
+        free_field = f"free_{message_type}_messages_used"
+        free_limit_key = f"free_{message_type}_messages"
+        free_limit = free_settings.get(free_limit_key, 0)
+        
+        current_free_used = user.get(free_field, 0)
+        
+        if current_free_used < free_limit:
+            # Use free message
+            cursor.execute(f'''
+                UPDATE users SET {free_field} = {free_field} + 1
                 WHERE user_id = ?
             ''', (user_id,))
             conn.commit()
@@ -687,7 +716,7 @@ class Database:
             FROM transactions t
             LEFT JOIN packages p ON t.package_id = p.id
             WHERE t.user_id = ? 
-            ORDER BY t.created_at DESC
+            ORDER BY t.created_date DESC
         ''', (user_id,))
         
         transactions = cursor.fetchall()
@@ -700,13 +729,13 @@ class Database:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # This would require a usage_history table to track individual message usage
-        # For now, return empty list
+        # Get actual message usage history from message_history table
         cursor.execute('''
-            SELECT 'text' as type, created_at, 'Message sent' as description
-            FROM transactions 
+            SELECT message_type, user_message, bot_response, timestamp as created_date,
+                   NULL as ai_model, NULL as tokens_used, NULL as cost
+            FROM message_history 
             WHERE user_id = ? 
-            ORDER BY created_at DESC 
+            ORDER BY timestamp DESC 
             LIMIT ?
         ''', (user_id, limit))
         
@@ -756,3 +785,60 @@ class Database:
         
         conn.commit()
         conn.close()
+    
+    def update_free_message_settings(self, free_text=None, free_image=None, free_video=None):
+        """Update free message settings"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        settings = []
+        if free_text is not None:
+            settings.append(('free_text_messages', str(free_text)))
+        if free_image is not None:
+            settings.append(('free_image_messages', str(free_image)))
+        if free_video is not None:
+            settings.append(('free_video_messages', str(free_video)))
+        
+        for key, value in settings:
+            cursor.execute('''
+                INSERT OR REPLACE INTO admin_settings (key, value)
+                VALUES (?, ?)
+            ''', (key, value))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_free_message_settings(self):
+        """Get free message settings from database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT key, value FROM admin_settings 
+            WHERE key IN ('free_text_messages', 'free_image_messages', 'free_video_messages')
+        ''')
+        
+        settings = {}
+        for row in cursor.fetchall():
+            key, value = row
+            try:
+                settings[key] = int(value)
+            except (ValueError, TypeError):
+                # Default values if conversion fails
+                if key == 'free_text_messages':
+                    settings[key] = 5
+                elif key == 'free_image_messages':
+                    settings[key] = 2
+                elif key == 'free_video_messages':
+                    settings[key] = 1
+        
+        # Set defaults if not found in database
+        if 'free_text_messages' not in settings:
+            settings['free_text_messages'] = 5
+        if 'free_image_messages' not in settings:
+            settings['free_image_messages'] = 2
+        if 'free_video_messages' not in settings:
+            settings['free_video_messages'] = 1
+        
+        conn.close()
+        return settings

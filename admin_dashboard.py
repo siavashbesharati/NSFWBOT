@@ -214,11 +214,10 @@ def settings():
         simulation_mode = 'simulation_mode' in request.form
         bot_active = 'bot_active' in request.form
         
-        # Free messages and pricing settings
-        free_messages = request.form.get('free_messages', '2')
-        default_text_price = request.form.get('default_text_price', '1')
-        default_image_price = request.form.get('default_image_price', '2')
-        default_video_price = request.form.get('default_video_price', '3')
+        # Free messages and rate limiting settings
+        free_text_messages = request.form.get('free_text_messages', '5')
+        free_image_messages = request.form.get('free_image_messages', '2')
+        free_video_messages = request.form.get('free_video_messages', '1')
         max_requests_per_minute = request.form.get('max_requests_per_minute', '20')
         max_requests_per_hour = request.form.get('max_requests_per_hour', '100')
         
@@ -236,10 +235,9 @@ def settings():
             'webhook_url': webhook_url,
             'simulation_mode': str(simulation_mode).lower(),
             'bot_active': str(bot_active).lower(),
-            'free_messages': free_messages,
-            'default_text_price': default_text_price,
-            'default_image_price': default_image_price,
-            'default_video_price': default_video_price,
+            'free_text_messages': free_text_messages,
+            'free_image_messages': free_image_messages,
+            'free_video_messages': free_video_messages,
             'max_requests_per_minute': max_requests_per_minute,
             'max_requests_per_hour': max_requests_per_hour,
             'max_image_size': max_image_size,
@@ -249,6 +247,13 @@ def settings():
         
         for key, value in settings_to_update.items():
             db.update_setting(key, value)
+        
+        # Also update the specific free message settings using the dedicated method
+        db.update_free_message_settings(
+            free_text=int(free_text_messages),
+            free_image=int(free_image_messages),
+            free_video=int(free_video_messages)
+        )
         
         flash('Settings updated successfully!')
         return redirect(url_for('settings'))

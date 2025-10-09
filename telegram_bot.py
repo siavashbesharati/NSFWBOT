@@ -46,6 +46,9 @@ class TelegramBot:
             last_name=user.last_name
         )
         
+        # Get free message settings from database
+        free_settings = self.db.get_free_message_settings()
+        
         welcome_message = f"""
 🤖 Welcome to the AI Bot, {user.first_name}!
 
@@ -54,8 +57,12 @@ I can help you with:
 🖼️ Image analysis
 🎥 Video responses
 
-🎁 You get {Config.FREE_MESSAGES} free message(s) to try me out!
-After that, you'll need to purchase a package to continue.
+🎁 Free Messages for new users:
+📝 Text: {free_settings['free_text_messages']} messages
+🖼️ Images: {free_settings['free_image_messages']} generations
+🎥 Videos: {free_settings['free_video_messages']} generations
+
+After using your free messages, you'll need to purchase a package to continue.
 
 Use /packages to see available packages
 Use /dashboard to check your usage
@@ -147,7 +154,13 @@ Use /help for more commands
             await update.message.reply_text("Please start the bot first with /start")
             return
         
-        free_messages_left = max(0, Config.FREE_MESSAGES - user_data['free_messages_used'])
+        # Get free message settings from database
+        free_settings = self.db.get_free_message_settings()
+        
+        # Calculate remaining free messages for each type
+        free_text_left = max(0, free_settings['free_text_messages'] - user_data.get('free_text_messages_used', 0))
+        free_image_left = max(0, free_settings['free_image_messages'] - user_data.get('free_image_messages_used', 0))
+        free_video_left = max(0, free_settings['free_video_messages'] - user_data.get('free_video_messages_used', 0))
         
         dashboard_text = f"""
 📊 Your Dashboard
@@ -155,14 +168,17 @@ Use /help for more commands
 👤 User: {user_data['first_name']} {user_data['last_name'] or ''}
 📅 Member since: {user_data['registration_date'][:10]}
 
-🎁 Free Messages: {free_messages_left}/{Config.FREE_MESSAGES}
+🎁 Free Messages Remaining:
+📝 Text: {free_text_left}/{free_settings['free_text_messages']}
+🖼️ Images: {free_image_left}/{free_settings['free_image_messages']}
+🎥 Videos: {free_video_left}/{free_settings['free_video_messages']}
 
-💬 Remaining Credits:
+💬 Paid Credits:
 📝 Text: {user_data['text_messages_left']}
 🖼️ Images: {user_data['image_messages_left']}
 🎥 Videos: {user_data['video_messages_left']}
 
-💰 Total Spent: {user_data['total_spent']}
+💰 Total Spent: ${user_data['total_spent']:.2f}
         """
         
         keyboard = [
@@ -182,12 +198,23 @@ Use /help for more commands
             await update.message.reply_text("Please start the bot first with /start")
             return
         
-        free_messages_left = max(0, Config.FREE_MESSAGES - user_data['free_messages_used'])
+        # Get free message settings from database
+        free_settings = self.db.get_free_message_settings()
+        
+        # Calculate remaining free messages for each type
+        free_text_left = max(0, free_settings['free_text_messages'] - user_data.get('free_text_messages_used', 0))
+        free_image_left = max(0, free_settings['free_image_messages'] - user_data.get('free_image_messages_used', 0))
+        free_video_left = max(0, free_settings['free_video_messages'] - user_data.get('free_video_messages_used', 0))
         
         balance_text = f"""
 💳 Your Balance
 
-🎁 Free Messages: {free_messages_left}
+🎁 Free Messages:
+📝 Text: {free_text_left} remaining
+🖼️ Images: {free_image_left} remaining
+🎥 Videos: {free_video_left} remaining
+
+💬 Paid Credits:
 📝 Text Messages: {user_data['text_messages_left']}
 🖼️ Image Messages: {user_data['image_messages_left']}
 🎥 Video Messages: {user_data['video_messages_left']}

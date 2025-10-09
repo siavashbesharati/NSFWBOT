@@ -132,42 +132,33 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="free_messages" class="form-label">Free Messages Per User</label>
-                            <input type="number" class="form-control" id="free_messages" name="free_messages" 
-                                   value="{{ settings.get('free_messages', '2') }}" min="0" max="10">
-                            <div class="form-text">Number of free messages each new user gets</div>
+                            <label for="free_text_messages" class="form-label">Free Text Messages</label>
+                            <input type="number" class="form-control" id="free_text_messages" name="free_text_messages" 
+                                   value="{{ settings.get('free_text_messages', '5') }}" min="0" max="20">
+                            <div class="form-text">Free text messages per new user</div>
                         </div>
                     </div>
                     
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="default_text_price" class="form-label">Text Message Price ($)</label>
-                            <input type="number" step="0.01" class="form-control" id="default_text_price" name="default_text_price" 
-                                   value="{{ settings.get('default_text_price', '1') }}" min="0.01" max="10">
-                            <div class="form-text">Price per text message in USD</div>
+                            <label for="free_image_messages" class="form-label">Free Image Messages</label>
+                            <input type="number" class="form-control" id="free_image_messages" name="free_image_messages" 
+                                   value="{{ settings.get('free_image_messages', '2') }}" min="0" max="10">
+                            <div class="form-text">Free image generations per new user</div>
                         </div>
                     </div>
                     
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="default_image_price" class="form-label">Image Message Price ($)</label>
-                            <input type="number" step="0.01" class="form-control" id="default_image_price" name="default_image_price" 
-                                   value="{{ settings.get('default_image_price', '2') }}" min="0.01" max="20">
-                            <div class="form-text">Price per image message in USD</div>
+                            <label for="free_video_messages" class="form-label">Free Video Messages</label>
+                            <input type="number" class="form-control" id="free_video_messages" name="free_video_messages" 
+                                   value="{{ settings.get('free_video_messages', '1') }}" min="0" max="5">
+                            <div class="form-text">Free video generations per new user</div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="default_video_price" class="form-label">Video Message Price ($)</label>
-                            <input type="number" step="0.01" class="form-control" id="default_video_price" name="default_video_price" 
-                                   value="{{ settings.get('default_video_price', '3') }}" min="0.01" max="30">
-                            <div class="form-text">Price per video message in USD</div>
-                        </div>
-                    </div>
-                    
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="max_requests_per_minute" class="form-label">Max Requests/Minute</label>
