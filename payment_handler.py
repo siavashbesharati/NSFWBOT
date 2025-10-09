@@ -9,7 +9,7 @@ from database import Database
 class PaymentHandler:
     def __init__(self, db: Database):
         self.db = db
-        self.simulation_mode = Config.SIMULATION_MODE
+        self.simulation_mode = self.db.get_setting('simulation_mode', 'true').lower() == 'true'
         
     async def create_stars_payment(self, user_id: int, package_id: int, amount: int) -> Dict[str, Any]:
         """Create Telegram Stars payment"""
@@ -108,10 +108,11 @@ class PaymentHandler:
                     package['video_count']
                 )
                 
+                ton_wallet_address = self.db.get_setting('ton_wallet_address', '')
                 return {
                     "success": True,
                     "transaction_id": transaction_id,
-                    "payment_url": f"https://app.tonkeeper.com/transfer/{Config.TON_WALLET_ADDRESS}?amount={amount}&text=Payment_{transaction_id}",
+                    "payment_url": f"https://app.tonkeeper.com/transfer/{ton_wallet_address}?amount={amount}&text=Payment_{transaction_id}",
                     "message": "✅ Simulation TON payment completed successfully!"
                 }
             
@@ -123,10 +124,11 @@ class PaymentHandler:
             # Generate TON payment URL
             payment_comment = f"Payment_{transaction_id}"
             ton_amount = int(amount * 1000000000)  # Convert to nanoTON
+            ton_wallet_address = self.db.get_setting('ton_wallet_address', '')
             
             payment_url = (
                 f"https://app.tonkeeper.com/transfer/"
-                f"{Config.TON_WALLET_ADDRESS}?"
+                f"{ton_wallet_address}?"
                 f"amount={ton_amount}&"
                 f"text={payment_comment}"
             )
@@ -135,7 +137,7 @@ class PaymentHandler:
                 "success": True,
                 "transaction_id": transaction_id,
                 "payment_url": payment_url,
-                "ton_address": Config.TON_WALLET_ADDRESS,
+                "ton_address": ton_wallet_address,
                 "amount": amount,
                 "comment": payment_comment,
                 "message": f"💎 TON payment created for {amount} TON"

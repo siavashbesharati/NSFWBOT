@@ -62,6 +62,14 @@
                 </div>
                 
                 <div class="mb-3">
+                    <label for="openrouter_base_url" class="form-label">OpenRouter Base URL</label>
+                    <input type="url" class="form-control" id="openrouter_base_url" name="openrouter_base_url" 
+                           value="{{ settings.get('openrouter_base_url', 'https://openrouter.ai/api/v1') }}" 
+                           placeholder="https://openrouter.ai/api/v1">
+                    <div class="form-text">Base URL for OpenRouter API (e.g., https://openrouter.ai/api/v1)</div>
+                </div>
+                
+                <div class="mb-3">
                     <label for="openrouter_model" class="form-label">AI Model</label>
                     <div class="input-group">
                         <select class="form-control" id="openrouter_model" name="openrouter_model">
@@ -98,17 +106,37 @@
                 <h5><i class="fas fa-coins"></i> Payment Configuration</h5>
                 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="mb-3">
                             <label for="ton_wallet" class="form-label">TON Wallet Address</label>
                             <input type="text" class="form-control" id="ton_wallet" name="ton_wallet" 
-                                   value="{{ settings.get('ton_wallet', '') }}" 
+                                   value="{{ settings.get('ton_wallet_address', '') }}" 
                                    placeholder="Enter your TON wallet address">
                             <div class="form-text">Wallet address to receive TON payments</div>
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Payment Methods</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="telegram_stars_enabled" name="telegram_stars_enabled" 
+                                       {% if settings.get('telegram_stars_enabled', 'true') == 'true' %}checked{% endif %}>
+                                <label class="form-check-label" for="telegram_stars_enabled">
+                                    <i class="fas fa-star text-warning"></i> Enable Telegram Stars
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ton_enabled" name="ton_enabled" 
+                                       {% if settings.get('ton_enabled', 'true') == 'true' %}checked{% endif %}>
+                                <label class="form-check-label" for="ton_enabled">
+                                    <i class="fas fa-coins text-primary"></i> Enable TON Payments
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
                         <div class="alert alert-info">
                             <h6><i class="fas fa-info-circle"></i> Payment Methods</h6>
                             <ul class="mb-0">
@@ -174,6 +202,110 @@
                             <input type="number" class="form-control" id="max_requests_per_hour" name="max_requests_per_hour" 
                                    value="{{ settings.get('max_requests_per_hour', '100') }}" min="10" max="1000">
                             <div class="form-text">Rate limit per user per hour</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Conversation Settings -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="glass-card p-4 mb-4">
+                <h5><i class="fas fa-comments"></i> Conversation Settings</h5>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="conversation_history_length" class="form-label">Conversation History Length</label>
+                            <input type="number" class="form-control" id="conversation_history_length" name="conversation_history_length" 
+                                   value="{{ settings.get('conversation_history_length', '10') }}" min="3" max="50">
+                            <div class="form-text">Number of previous messages to include for context</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="context_window_hours" class="form-label">Context Window (Hours)</label>
+                            <input type="number" class="form-control" id="context_window_hours" name="context_window_hours" 
+                                   value="{{ settings.get('context_window_hours', '24') }}" min="1" max="168">
+                            <div class="form-text">How long to keep conversation context (1-168 hours)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="enable_conversation_memory" class="form-label">Conversation Memory</label>
+                            <select class="form-control" id="enable_conversation_memory" name="enable_conversation_memory">
+                                <option value="true" {% if settings.get('enable_conversation_memory', 'true') == 'true' %}selected{% endif %}>Enabled</option>
+                                <option value="false" {% if settings.get('enable_conversation_memory', 'true') == 'false' %}selected{% endif %}>Disabled</option>
+                            </select>
+                            <div class="form-text">Enable contextual AI responses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Settings -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="glass-card p-4 mb-4">
+                <h5><i class="fas fa-cog"></i> Dashboard Settings</h5>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="dashboard_host" class="form-label">Dashboard Host</label>
+                            <input type="text" class="form-control" id="dashboard_host" name="dashboard_host" 
+                                   value="{{ settings.get('dashboard_host', '127.0.0.1') }}" 
+                                   placeholder="127.0.0.1">
+                            <div class="form-text">Host address for admin dashboard</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="dashboard_port" class="form-label">Dashboard Port</label>
+                            <input type="number" class="form-control" id="dashboard_port" name="dashboard_port" 
+                                   value="{{ settings.get('dashboard_port', '5000') }}" 
+                                   min="1000" max="65535">
+                            <div class="form-text">Port for admin dashboard</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label for="admin_username" class="form-label">Admin Username</label>
+                            <input type="text" class="form-control" id="admin_username" name="admin_username" 
+                                   value="{{ settings.get('admin_username', 'admin') }}" 
+                                   placeholder="admin">
+                            <div class="form-text">Username for dashboard login</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label for="admin_password" class="form-label">Admin Password</label>
+                            <input type="password" class="form-control" id="admin_password" name="admin_password" 
+                                   value="{{ settings.get('admin_password', 'admin') }}" 
+                                   placeholder="Enter admin password">
+                            <div class="form-text">Password for dashboard login</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label for="log_level" class="form-label">Log Level</label>
+                            <select class="form-control" id="log_level" name="log_level">
+                                <option value="DEBUG" {% if settings.get('log_level') == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+                                <option value="INFO" {% if settings.get('log_level') == 'INFO' or not settings.get('log_level') %}selected{% endif %}>INFO</option>
+                                <option value="WARNING" {% if settings.get('log_level') == 'WARNING' %}selected{% endif %}>WARNING</option>
+                                <option value="ERROR" {% if settings.get('log_level') == 'ERROR' %}selected{% endif %}>ERROR</option>
+                            </select>
+                            <div class="form-text">Logging verbosity level</div>
                         </div>
                     </div>
                 </div>

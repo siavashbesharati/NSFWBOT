@@ -100,6 +100,27 @@ class Database:
             )
         ''')
         
+        # Add new columns for conversation context if they don't exist
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN ai_model TEXT')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN tokens_used INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN cost REAL DEFAULT 0.0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN context_length INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
         # Admin settings table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS admin_settings (
@@ -742,6 +763,40 @@ class Database:
         usage = cursor.fetchall()
         conn.close()
         return usage
+
+    def get_conversation_history(self, user_id, limit=10):
+        """Get recent conversation history for AI context"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT user_message, bot_response, message_type, timestamp
+            FROM message_history 
+            WHERE user_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        ''', (user_id, limit))
+        
+        history = cursor.fetchall()
+        conn.close()
+        
+        # Return in chronological order (oldest first)
+        return list(reversed(history))
+
+    def save_message_history(self, user_id, message_type, user_message, bot_response, ai_model=None, tokens_used=0, cost=0.0, context_length=0):
+        """Save message and response to history"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO message_history 
+            (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ''', (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length))
+        
+        conn.commit()
+        conn.close()
 
     def get_user_by_id(self, user_id):
         """Get user by ID"""

@@ -105,6 +105,9 @@
                     <a class="nav-link {% if request.endpoint == 'users' %}active{% endif %}" href="{{ url_for('users') }}">
                         <i class="fas fa-users"></i> Users
                     </a>
+                    <a class="nav-link {% if request.endpoint == 'bulk_message' %}active{% endif %}" href="{{ url_for('bulk_message') }}">
+                        <i class="fas fa-broadcast-tower"></i> Bulk Messages
+                    </a>
                     <a class="nav-link {% if request.endpoint == 'packages' %}active{% endif %}" href="{{ url_for('packages') }}">
                         <i class="fas fa-box"></i> Packages
                     </a>

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Messaging - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-broadcast-tower"></i> Bulk Messaging</h1>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Message Composition -->
+        <div class="glass-card p-4 mb-4">
+            <h5><i class="fas fa-edit"></i> Compose Message</h5>
+            <form id="bulkMessageForm">
+                <div class="mb-3">
+                    <label for="bulkMessage" class="form-label">Message Content</label>
+                    <textarea class="form-control" id="bulkMessage" name="message" rows="6" 
+                            placeholder="Enter your message here..." required></textarea>
+                    <div class="form-text">
+                        You can use HTML formatting: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;code&gt;code&lt;/code&gt;
+                    </div>
+                </div>
+                
+                <!-- Target Selection -->
+                <div class="mb-3">
+                    <label class="form-label">Target Audience</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetAll" value="all" checked>
+                                <label class="form-check-label" for="targetAll">
+                                    <i class="fas fa-users"></i> All Users
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetPremium" value="premium">
+                                <label class="form-check-label" for="targetPremium">
+                                    <i class="fas fa-crown"></i> Premium Users Only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetFree" value="free">
+                                <label class="form-check-label" for="targetFree">
+                                    <i class="fas fa-user"></i> Free Users Only
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetSelected" value="selected">
+                                <label class="form-check-label" for="targetSelected">
+                                    <i class="fas fa-user-check"></i> Selected Users
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preview -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="previewMode">
+                        <label class="form-check-label" for="previewMode">
+                            Preview message before sending
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="messagePreview" class="alert alert-info d-none">
+                    <strong>Preview:</strong>
+                    <div id="previewContent"></div>
+                </div>
+                
+                <!-- Send Button -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-danger me-md-2" id="testMessage">
+                        <i class="fas fa-vial"></i> Send Test Message to Me
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="sendBulkBtn">
+                        <i class="fas fa-paper-plane"></i> Send Bulk Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Target Statistics -->
+        <div class="glass-card p-4 mb-4">
+            <h5><i class="fas fa-chart-bar"></i> Target Statistics</h5>
+            <div id="targetStats">
+                <div class="d-flex justify-content-between">
+                    <span>Total Users:</span>
+                    <span class="badge bg-primary" id="totalUsers">{{ users|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Premium Users:</span>
+                    <span class="badge bg-warning" id="premiumUsers">
+                        {{ users|selectattr('is_premium')|list|length }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Free Users:</span>
+                    <span class="badge bg-secondary" id="freeUsers">
+                        {{ users|rejectattr('is_premium')|list|length }}
+                    </span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <strong>Selected:</strong>
+                    <strong><span class="badge bg-success" id="selectedCount">{{ users|length }}</span></strong>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Selection (shown when "Selected Users" is chosen) -->
+        <div class="glass-card p-4 d-none" id="userSelectionCard">
+            <h5><i class="fas fa-user-check"></i> Select Users</h5>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllUsers">
+                    <label class="form-check-label" for="selectAllUsers">
+                        <strong>Select All</strong>
+                    </label>
+                </div>
+                <hr>
+            </div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for user in users %}
+                <div class="form-check">
+                    <input class="form-check-input user-checkbox" type="checkbox" 
+                           name="selected_users" value="{{ user.user_id }}" id="user{{ user.user_id }}">
+                    <label class="form-check-label" for="user{{ user.user_id }}">
+                        <small>
+                            {% if user.username %}@{{ user.username }}{% else %}{{ user.first_name or 'Unknown' }}{% endif %}
+                            {% if user.is_premium %}<i class="fas fa-crown text-warning"></i>{% endif %}
+                        </small>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressModalLabel">
+                    <i class="fas fa-paper-plane"></i> Sending Messages
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="progressText">Preparing to send messages...</div>
+                <div id="progressDetails" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary d-none" id="closeProgressBtn" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const targetRadios = document.querySelectorAll('input[name="target_type"]');
+    const userSelectionCard = document.getElementById('userSelectionCard');
+    const selectAllCheckbox = document.getElementById('selectAllUsers');
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    const selectedCountBadge = document.getElementById('selectedCount');
+    const bulkMessage = document.getElementById('bulkMessage');
+    const previewMode = document.getElementById('previewMode');
+    const messagePreview = document.getElementById('messagePreview');
+    const previewContent = document.getElementById('previewContent');
+    
+    // Handle target type changes
+    targetRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateTargetSelection();
+        });
+    });
+    
+    // Handle select all checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        userCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectedCount();
+    });
+    
+    // Handle individual user checkboxes
+    userCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            // Update select all checkbox state
+            const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
+            const noneChecked = Array.from(userCheckboxes).every(cb => !cb.checked);
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = !allChecked && !noneChecked;
+        });
+    });
+    
+    // Preview functionality
+    previewMode.addEventListener('change', function() {
+        if (this.checked) {
+            updatePreview();
+            messagePreview.classList.remove('d-none');
+        } else {
+            messagePreview.classList.add('d-none');
+        }
+    });
+    
+    bulkMessage.addEventListener('input', function() {
+        if (previewMode.checked) {
+            updatePreview();
+        }
+    });
+    
+    function updateTargetSelection() {
+        const selectedType = document.querySelector('input[name="target_type"]:checked').value;
+        
+        if (selectedType === 'selected') {
+            userSelectionCard.classList.remove('d-none');
+        } else {
+            userSelectionCard.classList.add('d-none');
+        }
+        
+        updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+        const selectedType = document.querySelector('input[name="target_type"]:checked').value;
+        let count = 0;
+        
+        if (selectedType === 'all') {
+            count = {{ users|length }};
+        } else if (selectedType === 'premium') {
+            count = {{ users|selectattr('is_premium')|list|length }};
+        } else if (selectedType === 'free') {
+            count = {{ users|rejectattr('is_premium')|list|length }};
+        } else if (selectedType === 'selected') {
+            count = Array.from(userCheckboxes).filter(cb => cb.checked).length;
+        }
+        
+        selectedCountBadge.textContent = count;
+    }
+    
+    function updatePreview() {
+        const text = bulkMessage.value;
+        // Basic HTML preview (sanitized)
+        previewContent.innerHTML = text
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/&lt;b&gt;(.*?)&lt;\/b&gt;/g, '<b>$1</b>')
+            .replace(/&lt;i&gt;(.*?)&lt;\/i&gt;/g, '<i>$1</i>')
+            .replace(/&lt;code&gt;(.*?)&lt;\/code&gt;/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+    
+    // Handle form submission
+    document.getElementById('bulkMessageForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendBulkMessage();
+    });
+    
+    function sendBulkMessage() {
+        const message = bulkMessage.value.trim();
+        if (!message) {
+            alert('Please enter a message');
+            return;
+        }
+        
+        const selectedType = document.querySelector('input[name="target_type"]:checked').value;
+        const selectedCount = parseInt(selectedCountBadge.textContent);
+        
+        if (selectedCount === 0) {
+            alert('No users selected to send message to');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to send this message to ${selectedCount} users?`)) {
+            return;
+        }
+        
+        // Show progress modal
+        const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+        progressModal.show();
+        
+        // Prepare form data
+        const formData = new FormData(document.getElementById('bulkMessageForm'));
+        
+        // Send the bulk message
+        fetch('/send_bulk_message', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.getElementById('progressText');
+            const progressDetails = document.getElementById('progressDetails');
+            const closeBtn = document.getElementById('closeProgressBtn');
+            
+            progressBar.style.width = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+            
+            if (data.success) {
+                progressText.innerHTML = `<i class="fas fa-check-circle text-success"></i> Bulk message sent successfully!`;
+                progressDetails.innerHTML = `
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="badge bg-success fs-6">${data.sent_count}</div>
+                                <div class="small text-muted">Messages Sent</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="badge bg-danger fs-6">${data.failed_count}</div>
+                                <div class="small text-muted">Failed</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${data.failed_count > 0 ? '<div class="mt-2"><small class="text-muted">Some messages failed to send. Check logs for details.</small></div>' : ''}
+                `;
+                
+                // Clear form
+                bulkMessage.value = '';
+                previewContent.innerHTML = '';
+                messagePreview.classList.add('d-none');
+                previewMode.checked = false;
+            } else {
+                progressText.innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> Error: ${data.error}`;
+            }
+            
+            closeBtn.classList.remove('d-none');
+        })
+        .catch(error => {
+            const progressText = document.getElementById('progressText');
+            const closeBtn = document.getElementById('closeProgressBtn');
+            
+            progressText.innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> Error: ${error}`;
+            closeBtn.classList.remove('d-none');
+        });
+    }
+    
+    // Initialize
+    updateTargetSelection();
+});
+</script>
+{% endblock %}

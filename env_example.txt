@@ -2,102 +2,68 @@
 # TELEGRAM BOT CONFIGURATION
 # =================================================================
 
-# Get this from @BotFather on Telegram
+# ✅ REQUIRED: Get this from @BotFather on Telegram
 BOT_TOKEN=your_telegram_bot_token_here
 
-# Your Telegram user ID (admin)
+# ⚠️ OPTIONAL: Your Telegram user ID (admin) - if not set, first user becomes admin
 ADMIN_CHAT_ID=123456789
-
-# =================================================================
-# AI CONFIGURATION (OpenRouter)
-# =================================================================
-
-# Get this from https://openrouter.ai/
-OPENROUTER_API_KEY=your_openrouter_api_key_here
-
-# AI Model to use for responses
-OPENROUTER_MODEL=openai/gpt-3.5-turbo
-
-# Available models:
-# - openai/gpt-3.5-turbo (fast, cheap)
-# - openai/gpt-4 (better quality, more expensive)
-# - anthropic/claude-3-haiku (fast Claude)
-# - anthropic/claude-3-sonnet (balanced Claude)
-# - google/gemini-pro (Google's model)
-# - mistralai/mistral-7b-instruct (open source)
-
-# =================================================================
-# PAYMENT CONFIGURATION
-# =================================================================
-
-# TON Wallet address to receive payments
-TON_WALLET_ADDRESS=your_ton_wallet_address_here
-
-# Enable/disable payment methods
-TELEGRAM_STARS_ENABLED=true
-TON_ENABLED=true
-
-# =================================================================
-# ADMIN DASHBOARD CONFIGURATION
-# =================================================================
-
-# Admin login credentials
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-
-# Flask secret key (change this!)
-SECRET_KEY=your-super-secret-key-change-this-in-production
-
-# Dashboard web interface
-DASHBOARD_HOST=127.0.0.1
-DASHBOARD_PORT=5000
 
 # =================================================================
 # DATABASE CONFIGURATION
 # =================================================================
 
-# SQLite database file path
+# ⚠️ OPTIONAL: SQLite database file path (default: bot_database.db)
 DATABASE_PATH=bot_database.db
 
 # =================================================================
-# BOT BEHAVIOR SETTINGS
+# ADMIN DASHBOARD SECURITY
 # =================================================================
 
-# Enable simulation mode for testing (uses sandbox payments)
-SIMULATION_MODE=false
-
-# Bot running status
-BOT_RUNNING=true
-
-# Number of free messages per user
-FREE_MESSAGES=1
+# ⚠️ OPTIONAL: Flask secret key for session security
+# IMPORTANT: Change this in production!
+SECRET_KEY=your-super-secret-key-change-this-in-production
 
 # =================================================================
-# DEFAULT PRICING (in Telegram Stars)
+# WEBHOOK CONFIGURATION (Production Only)
 # =================================================================
 
-DEFAULT_TEXT_PRICE=1
-DEFAULT_IMAGE_PRICE=2
-DEFAULT_VIDEO_PRICE=3
+# ⚠️ OPTIONAL: Webhook configuration for production deployment
+# WEBHOOK_PATH=/webhook
 
 # =================================================================
-# ADVANCED SETTINGS
+# CONFIGURATION MIGRATION NOTICE
 # =================================================================
 
-# Maximum file sizes (in MB)
-MAX_IMAGE_SIZE=10
-MAX_VIDEO_SIZE=50
-
-# AI response timeout (in seconds)
-AI_RESPONSE_TIMEOUT=30
-
-# Webhook configuration (for production)
-WEBHOOK_URL=https://yourdomain.com/webhook
-WEBHOOK_PATH=/webhook
-
-# Rate limiting
-MAX_REQUESTS_PER_MINUTE=20
-MAX_REQUESTS_PER_HOUR=100
-
-# Logging level (DEBUG, INFO, WARNING, ERROR)
-LOG_LEVEL=INFO
+# 🎉 MOST SETTINGS MOVED TO DATABASE!
+# The following settings are now managed through the web admin dashboard:
+#
+# ✅ AI Configuration:
+#   - OpenRouter API Key
+#   - AI Model Selection
+#
+# ✅ Payment Settings:
+#   - TON Wallet Address
+#   - Payment Methods (Telegram Stars, TON)
+#
+# ✅ Bot Behavior:
+#   - Simulation Mode
+#   - Bot Active Status
+#   - Free Messages Configuration
+#
+# ✅ Pricing Settings:
+#   - Default Text/Image/Video Prices
+#
+# ✅ Dashboard Settings:
+#   - Dashboard Host/Port
+#   - Admin Username/Password
+#
+# ✅ Advanced Settings:
+#   - File Size Limits
+#   - Rate Limiting
+#   - Logging Level
+#   - AI Response Timeout
+#   - Webhook URL
+#
+# 🚀 Access the admin dashboard to configure these settings:
+#   http://127.0.0.1:5000 (default)
+#   Login: admin / admin (defaults, change in dashboard)

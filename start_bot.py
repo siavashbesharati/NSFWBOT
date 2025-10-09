@@ -43,7 +43,8 @@ class BotManager:
     
     def setup_logging(self):
         """Setup logging configuration"""
-        log_level = getattr(logging, Config.LOG_LEVEL.upper(), logging.INFO)
+        log_level_str = self.db.get_setting('log_level', 'INFO').upper()
+        log_level = getattr(logging, log_level_str, logging.INFO)
         
         logging.basicConfig(
             level=log_level,
@@ -54,7 +55,7 @@ class BotManager:
             ]
         )
         
-        print(f"📝 Logging configured at {Config.LOG_LEVEL} level")
+        print(f"📝 Logging configured at {log_level_str} level")
     
     def initialize_database(self):
         """Initialize the database"""
@@ -107,9 +108,11 @@ class BotManager:
             import threading
             def run_dashboard():
                 try:
+                    dashboard_host = self.db.get_setting('dashboard_host', '127.0.0.1')
+                    dashboard_port = int(self.db.get_setting('dashboard_port', '5000'))
                     dashboard_app.run(
-                        host=Config.DASHBOARD_HOST,
-                        port=Config.DASHBOARD_PORT,
+                        host=dashboard_host,
+                        port=dashboard_port,
                         debug=False,
                         use_reloader=False
                     )
@@ -119,8 +122,12 @@ class BotManager:
             dashboard_thread = threading.Thread(target=run_dashboard, daemon=True)
             dashboard_thread.start()
             
-            print(f"✅ Admin dashboard started at http://{Config.DASHBOARD_HOST}:{Config.DASHBOARD_PORT}")
-            print(f"   Login: {Config.ADMIN_USERNAME} / {Config.ADMIN_PASSWORD}")
+            dashboard_host = self.db.get_setting('dashboard_host', '127.0.0.1')
+            dashboard_port = self.db.get_setting('dashboard_port', '5000')
+            admin_username = self.db.get_setting('admin_username', 'admin')
+            admin_password = self.db.get_setting('admin_password', 'admin')
+            print(f"✅ Admin dashboard started at http://{dashboard_host}:{dashboard_port}")
+            print(f"   Login: {admin_username} / {admin_password}")
             return dashboard_thread
             
         except Exception as e:
@@ -169,8 +176,10 @@ class BotManager:
         
         # Dashboard status
         if self.dashboard_thread and self.dashboard_thread.is_alive():
+            dashboard_host = self.db.get_setting('dashboard_host', '127.0.0.1')
+            dashboard_port = self.db.get_setting('dashboard_port', '5000')
             print(f"🌐 Admin Dashboard: ✅ Running")
-            print(f"   URL: http://{Config.DASHBOARD_HOST}:{Config.DASHBOARD_PORT}")
+            print(f"   URL: http://{dashboard_host}:{dashboard_port}")
         else:
             print("🌐 Admin Dashboard: ❌ Stopped")
         
@@ -184,7 +193,8 @@ class BotManager:
             print("🗄️ Database: ❌ Error")
         
         # Configuration
-        print(f"⚙️ Mode: {'🧪 Simulation' if Config.SIMULATION_MODE else '🚀 Production'}")
+        simulation_mode = self.db.get_setting('simulation_mode', 'true').lower() == 'true'
+        print(f"⚙️ Mode: {'🧪 Simulation' if simulation_mode else '🚀 Production'}")
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""

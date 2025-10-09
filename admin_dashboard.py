@@ -209,10 +209,15 @@ def settings():
         bot_token = request.form['bot_token']
         openrouter_api_key = request.form['openrouter_api_key']
         openrouter_model = request.form['openrouter_model']
-        ton_wallet = request.form['ton_wallet']
+        openrouter_base_url = request.form['openrouter_base_url']
+        ton_wallet_address = request.form['ton_wallet']
         webhook_url = request.form['webhook_url']
         simulation_mode = 'simulation_mode' in request.form
         bot_active = 'bot_active' in request.form
+        
+        # Payment method settings
+        telegram_stars_enabled = 'telegram_stars_enabled' in request.form
+        ton_enabled = 'ton_enabled' in request.form
         
         # Free messages and rate limiting settings
         free_text_messages = request.form.get('free_text_messages', '5')
@@ -226,15 +231,30 @@ def settings():
         max_video_size = request.form.get('max_video_size', '50')
         ai_response_timeout = request.form.get('ai_response_timeout', '30')
         
+        # Conversation settings
+        conversation_history_length = request.form.get('conversation_history_length', '10')
+        context_window_hours = request.form.get('context_window_hours', '24')
+        enable_conversation_memory = request.form.get('enable_conversation_memory', 'true')
+        
+        # Dashboard settings
+        dashboard_host = request.form.get('dashboard_host', '127.0.0.1')
+        dashboard_port = request.form.get('dashboard_port', '5000')
+        admin_username = request.form.get('admin_username', 'admin')
+        admin_password = request.form.get('admin_password', 'admin')
+        log_level = request.form.get('log_level', 'INFO')
+        
         # Update in database
         settings_to_update = {
             'bot_token': bot_token,
             'openrouter_api_key': openrouter_api_key,
             'openrouter_model': openrouter_model,
-            'ton_wallet': ton_wallet,
+            'openrouter_base_url': openrouter_base_url,
+            'ton_wallet_address': ton_wallet_address,
             'webhook_url': webhook_url,
             'simulation_mode': str(simulation_mode).lower(),
             'bot_active': str(bot_active).lower(),
+            'telegram_stars_enabled': str(telegram_stars_enabled).lower(),
+            'ton_enabled': str(ton_enabled).lower(),
             'free_text_messages': free_text_messages,
             'free_image_messages': free_image_messages,
             'free_video_messages': free_video_messages,
@@ -242,7 +262,15 @@ def settings():
             'max_requests_per_hour': max_requests_per_hour,
             'max_image_size': max_image_size,
             'max_video_size': max_video_size,
-            'ai_response_timeout': ai_response_timeout
+            'ai_response_timeout': ai_response_timeout,
+            'conversation_history_length': conversation_history_length,
+            'context_window_hours': context_window_hours,
+            'enable_conversation_memory': enable_conversation_memory,
+            'dashboard_host': dashboard_host,
+            'dashboard_port': dashboard_port,
+            'admin_username': admin_username,
+            'admin_password': admin_password,
+            'log_level': log_level
         }
         
         for key, value in settings_to_update.items():
@@ -361,6 +389,99 @@ def send_message_to_user(user_id):
             
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error sending message: {str(e)}'})
+
+@app.route('/bulk_message')
+@login_required
+def bulk_message():
+    """Bulk message sending page"""
+    # Get all users for selection
+    users = db.get_all_users()
+    return render_template('bulk_message.html', users=users)
+
+@app.route('/send_bulk_message', methods=['POST'])
+@login_required
+def send_bulk_message():
+    """Send bulk messages to selected users"""
+    try:
+        # Get form data
+        message = request.form.get('message', '').strip()
+        target_type = request.form.get('target_type', 'all')  # 'all', 'premium', 'free', 'selected'
+        selected_users = request.form.getlist('selected_users')
+        
+        if not message:
+            return jsonify({'success': False, 'error': 'Message cannot be empty'})
+        
+        # Get bot token from database settings
+        bot_token = db.get_setting('bot_token')
+        if not bot_token:
+            return jsonify({'success': False, 'error': 'Bot token not configured'})
+        
+        # Get target users based on selection
+        if target_type == 'all':
+            target_users = db.get_all_users()
+        elif target_type == 'premium':
+            target_users = [user for user in db.get_all_users() if user.get('is_premium')]
+        elif target_type == 'free':
+            target_users = [user for user in db.get_all_users() if not user.get('is_premium')]
+        elif target_type == 'selected':
+            if not selected_users:
+                return jsonify({'success': False, 'error': 'No users selected'})
+            target_users = [user for user in db.get_all_users() if str(user['user_id']) in selected_users]
+        else:
+            return jsonify({'success': False, 'error': 'Invalid target type'})
+        
+        # Import here to avoid circular imports
+        import requests
+        import time
+        
+        # Send messages to all target users
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        sent_count = 0
+        failed_count = 0
+        failed_users = []
+        
+        for user in target_users:
+            try:
+                payload = {
+                    'chat_id': user['user_id'],
+                    'text': message,
+                    'parse_mode': 'HTML'
+                }
+                
+                response = requests.post(url, data=payload, timeout=10)
+                result = response.json()
+                
+                if result.get('ok'):
+                    sent_count += 1
+                else:
+                    failed_count += 1
+                    failed_users.append({
+                        'user_id': user['user_id'],
+                        'username': user.get('username', 'N/A'),
+                        'error': result.get('description', 'Unknown error')
+                    })
+                
+                # Small delay to avoid rate limiting
+                time.sleep(0.1)
+                
+            except Exception as e:
+                failed_count += 1
+                failed_users.append({
+                    'user_id': user['user_id'],
+                    'username': user.get('username', 'N/A'),
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'success': True,
+            'sent_count': sent_count,
+            'failed_count': failed_count,
+            'failed_users': failed_users,
+            'total_users': len(target_users)
+        })
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Error sending bulk message: {str(e)}'})
 
 @app.route('/api/openrouter/models')
 @login_required

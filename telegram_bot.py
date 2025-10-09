@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
     def __init__(self):
         self.db = Database()
-        self.ai_handler = OpenRouterAPI()
+        self.ai_handler = OpenRouterAPI(database=self.db)
         self.payment_handler = PaymentHandler(self.db)
         self.app = None
         
@@ -115,11 +115,15 @@ Use /help for more commands
                 f"🎥 {package['video_count']} video messages\n"
             )
             
-            if Config.TELEGRAM_STARS_ENABLED:
+            # Get payment settings from database
+            telegram_stars_enabled = self.db.get_setting('telegram_stars_enabled', 'true') == 'true'
+            ton_enabled = self.db.get_setting('ton_enabled', 'true') == 'true'
+            
+            if telegram_stars_enabled:
                 package_text += f"⭐ {package['price_stars']} Stars"
             
-            if Config.TON_ENABLED:
-                if Config.TELEGRAM_STARS_ENABLED:
+            if ton_enabled:
+                if telegram_stars_enabled:
                     package_text += f" or 💎 {package['price_ton']} TON"
                 else:
                     package_text += f"💎 {package['price_ton']} TON"
@@ -128,13 +132,13 @@ Use /help for more commands
             
             # Create payment buttons
             row = []
-            if Config.TELEGRAM_STARS_ENABLED:
+            if telegram_stars_enabled:
                 row.append(InlineKeyboardButton(
                     f"⭐ Buy with Stars ({package['price_stars']})",
                     callback_data=f"buy_stars_{package['id']}"
                 ))
             
-            if Config.TON_ENABLED:
+            if ton_enabled:
                 row.append(InlineKeyboardButton(
                     f"💎 Buy with TON ({package['price_ton']})",
                     callback_data=f"buy_ton_{package['id']}"
@@ -249,11 +253,31 @@ Use /packages to buy more credits!
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
         
         try:
-            # Generate AI response
-            ai_response = await self.ai_handler.generate_text_response(user_message)
+            # Check if conversation memory is enabled
+            memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
+            conversation_history = []
             
-            # Save to message history
-            self.db.add_message_history(user_id, 'text', user_message, ai_response)
+            if memory_enabled:
+                # Get configurable conversation history length
+                history_length = int(self.db.get_setting('conversation_history_length', '10'))
+                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+            
+            # Generate AI response with context
+            ai_response = await self.ai_handler.generate_text_response(
+                user_message, 
+                conversation_history=conversation_history
+            )
+            
+            # Save to message history with AI model info
+            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            self.db.save_message_history(
+                user_id, 
+                'text', 
+                user_message, 
+                ai_response,
+                ai_model=ai_model,
+                context_length=len(conversation_history)
+            )
             
             # Send response
             await update.message.reply_text(ai_response)
@@ -296,11 +320,32 @@ Use /packages to buy more credits!
             # Get caption if any
             caption = update.message.caption or "What do you see in this image?"
             
-            # Generate AI response
-            ai_response = await self.ai_handler.generate_image_response(caption, bytes(image_data))
+            # Check if conversation memory is enabled
+            memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
+            conversation_history = []
             
-            # Save to message history
-            self.db.add_message_history(user_id, 'image', caption, ai_response)
+            if memory_enabled:
+                # Get configurable conversation history length
+                history_length = int(self.db.get_setting('conversation_history_length', '10'))
+                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+            
+            # Generate AI response with context
+            ai_response = await self.ai_handler.generate_image_response(
+                caption, 
+                bytes(image_data),
+                conversation_history=conversation_history
+            )
+            
+            # Save to message history with AI model info
+            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            self.db.save_message_history(
+                user_id, 
+                'image', 
+                caption, 
+                ai_response,
+                ai_model=ai_model,
+                context_length=len(conversation_history)
+            )
             
             # Send response
             await update.message.reply_text(ai_response)
@@ -336,11 +381,31 @@ Use /packages to buy more credits!
             # Get caption if any
             caption = update.message.caption or "User sent a video"
             
-            # Generate AI response
-            ai_response = await self.ai_handler.generate_video_response(caption)
+            # Check if conversation memory is enabled
+            memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
+            conversation_history = []
             
-            # Save to message history
-            self.db.add_message_history(user_id, 'video', caption, ai_response)
+            if memory_enabled:
+                # Get configurable conversation history length
+                history_length = int(self.db.get_setting('conversation_history_length', '10'))
+                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+            
+            # Generate AI response with context
+            ai_response = await self.ai_handler.generate_video_response(
+                caption,
+                conversation_history=conversation_history
+            )
+            
+            # Save to message history with AI model info
+            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            self.db.save_message_history(
+                user_id, 
+                'video', 
+                caption, 
+                ai_response,
+                ai_model=ai_model,
+                context_length=len(conversation_history)
+            )
             
             # Send response
             await update.message.reply_text(ai_response)
@@ -405,7 +470,10 @@ Use /packages to buy more credits!
         result = await self.payment_handler.create_stars_payment(user_id, package_id, amount)
         
         if result['success']:
-            if Config.SIMULATION_MODE:
+            # Get simulation mode from database
+            simulation_mode = self.db.get_setting('simulation_mode', 'false') == 'true'
+            
+            if simulation_mode:
                 await query.edit_message_text(result['message'])
             else:
                 # Create invoice for real payment
@@ -438,7 +506,10 @@ Use /packages to buy more credits!
         result = await self.payment_handler.create_ton_payment(user_id, package_id, amount)
         
         if result['success']:
-            if Config.SIMULATION_MODE:
+            # Get simulation mode from database
+            simulation_mode = self.db.get_setting('simulation_mode', 'false') == 'true'
+            
+            if simulation_mode:
                 await query.edit_message_text(result['message'])
             else:
                 message = f"""
@@ -498,8 +569,11 @@ Use /packages to buy more credits!
             # Validate configuration
             Config.validate_config()
             
+            # Get bot token from database or config
+            bot_token = self.db.get_setting('bot_token', Config.BOT_TOKEN)
+            
             # Create application
-            self.app = Application.builder().token(Config.BOT_TOKEN).build()
+            self.app = Application.builder().token(bot_token).build()
             
             # Add handlers
             self.app.add_handler(CommandHandler("start", self.start_command))
