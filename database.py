@@ -495,12 +495,12 @@ class Database:
         return result[0] if result and result[0] else 0.0
 
     def get_payment_statistics(self):
-        """Get detailed payment statistics"""
+        """Get detailed payment statistics with currency-aware totals"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Total revenue by payment method
+        # Total revenue by payment method (currency-aware)
         cursor.execute('''
             SELECT 
                 payment_method,
@@ -514,12 +514,25 @@ class Database:
         
         payment_methods_rows = cursor.fetchall()
         payment_methods = []
+        total_ton = 0.0
+        total_stars = 0.0
+        
         for row in payment_methods_rows:
+            payment_method = row['payment_method']
+            total_amount = row['total_amount']
+            
+            # Track totals by currency
+            if payment_method == 'ton':
+                total_ton += total_amount
+            elif payment_method == 'telegram_stars':
+                total_stars += total_amount
+                
             payment_methods.append({
-                'payment_method': row['payment_method'],
+                'payment_method': payment_method,
                 'transaction_count': row['transaction_count'],
-                'total_amount': row['total_amount'],
-                'avg_amount': row['avg_amount']
+                'total_amount': total_amount,
+                'avg_amount': row['avg_amount'],
+                'currency_symbol': '💎 TON' if payment_method == 'ton' else '⭐ Stars'
             })
         
         # Recent payments
@@ -558,14 +571,40 @@ class Database:
         
         totals = cursor.fetchone()
         
+        # Recent payments with currency symbols
+        for payment in recent_payments:
+            payment_method = payment['payment_method']
+            if payment_method == 'ton':
+                payment['currency_symbol'] = '💎 TON'
+                payment['display_amount'] = f"{payment['amount']} TON"
+            elif payment_method == 'telegram_stars':
+                payment['currency_symbol'] = '⭐ Stars'
+                payment['display_amount'] = f"{payment['amount']} ⭐"
+            else:
+                payment['currency_symbol'] = '$'
+                payment['display_amount'] = f"${payment['amount']}"
+        
+        # Total counts (no longer mixed currency)
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_transactions,
+                COUNT(DISTINCT user_id) as paying_users
+            FROM transactions 
+            WHERE status = 'completed'
+        ''')
+        
+        totals = cursor.fetchone()
+        
         conn.close()
         
         return {
             'payment_methods': payment_methods,
             'recent_payments': recent_payments,
             'total_transactions': totals[0] if totals else 0,
-            'total_revenue': totals[1] if totals else 0.0,
-            'paying_users': totals[2] if totals else 0
+            'total_ton': total_ton,
+            'total_stars': total_stars,
+            'total_revenue': total_ton + total_stars,  # Keep for backward compatibility
+            'paying_users': totals[1] if totals else 0
         }
 
     def get_user_count(self):

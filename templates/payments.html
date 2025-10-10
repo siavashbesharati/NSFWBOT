@@ -9,28 +9,32 @@
 
 <!-- Revenue Summary Cards -->
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="glass-card p-3 text-center">
-            <h2 class="text-primary">${{ "%.2f"|format(total_revenue) }}</h2>
-            <p class="mb-0"><i class="fas fa-dollar-sign"></i> Total Revenue</p>
+            <div class="revenue-display">
+                {% if total_ton > 0 %}
+                    <h5 class="text-primary mb-1">💎 {{ total_ton|currency }} TON</h5>
+                {% endif %}
+                {% if total_stars > 0 %}
+                                        <h5 class="text-warning mb-1">⭐ {{ total_stars|currency }} Stars</h5>
+                {% endif %}
+                {% if total_ton == 0 and total_stars == 0 %}
+                    <h2 class="text-primary">No Revenue</h2>
+                {% endif %}
+            </div>
+            <p class="mb-0"><i class="fas fa-coins"></i> Total Revenue</p>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="glass-card p-3 text-center">
             <h2 class="text-success">{{ total_transactions }}</h2>
             <p class="mb-0"><i class="fas fa-receipt"></i> Completed Payments</p>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="glass-card p-3 text-center">
             <h2 class="text-info">{{ paying_users }}</h2>
             <p class="mb-0"><i class="fas fa-users"></i> Paying Users</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="glass-card p-3 text-center">
-            <h2 class="text-warning">${{ "%.2f"|format(total_revenue / total_transactions if total_transactions > 0 else 0) }}</h2>
-            <p class="mb-0"><i class="fas fa-chart-line"></i> Avg. Payment</p>
         </div>
     </div>
 </div>
@@ -56,7 +60,7 @@
                             <tr>
                                 <td>
                                     {% if method.payment_method == 'ton' %}
-                                        <span class="badge bg-primary"><i class="fab fa-bitcoin"></i> TON</span>
+                                        <span class="badge bg-primary"><i class="fas fa-gem"></i> TON</span>
                                     {% elif method.payment_method == 'stars' %}
                                         <span class="badge bg-warning"><i class="fas fa-star"></i> Stars</span>
                                     {% else %}
@@ -66,20 +70,20 @@
                                 <td>{{ method.transaction_count }}</td>
                                 <td>
                                     {% if method.payment_method == 'ton' %}
-                                        {{ "%.4f"|format(method.total_amount) }} TON
+                                        {{ method.total_amount|currency }} 💎
                                     {% elif method.payment_method == 'stars' %}
-                                        {{ method.total_amount|int }} ⭐
+                                        {{ method.total_amount|currency }} ⭐
                                     {% else %}
-                                        ${{ "%.2f"|format(method.total_amount) }}
+                                        {{ method.total_amount|currency }}
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if method.payment_method == 'ton' %}
-                                        {{ "%.4f"|format(method.avg_amount) }} TON
+                                        {{ method.avg_amount|currency }} 💎
                                     {% elif method.payment_method == 'stars' %}
-                                        {{ method.avg_amount|int }} ⭐
+                                        {{ method.avg_amount|currency }} ⭐
                                     {% else %}
-                                        ${{ "%.2f"|format(method.avg_amount) }}
+                                        {{ method.avg_amount|currency }}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -123,11 +127,11 @@
                                 <td>{{ payment.package_name or 'N/A' }}</td>
                                 <td>
                                     {% if payment.payment_method == 'ton' %}
-                                        <span class="badge bg-primary">{{ payment.amount }} TON</span>
+                                        <span class="badge bg-primary">{{ payment.amount|currency }} 💎 </span>
                                     {% elif payment.payment_method == 'stars' %}
-                                        <span class="badge bg-warning">{{ payment.amount }} ⭐</span>
+                                        <span class="badge bg-warning">{{ payment.amount|currency }} ⭐</span>
                                     {% else %}
-                                        <span class="badge bg-success">${{ payment.amount }}</span>
+                                        <span class="badge bg-success">{{ payment.amount|currency }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -160,7 +164,18 @@
             <div class="text-center py-5 text-muted">
                 <i class="fas fa-chart-line fa-3x mb-3"></i>
                 <p>Revenue charts and analytics will be available in future updates</p>
-                <small>Current total revenue: <strong>${{ "%.2f"|format(total_revenue) }}</strong></small>
+                <div>
+                    <small>Current total revenue:</small><br>
+                    {% if total_ton > 0 %}
+                        <strong>💎 {{ total_ton|currency }} TON</strong><br>
+                    {% endif %}
+                    {% if total_stars > 0 %}
+                        <strong>⭐ {{ total_stars|currency }} Stars</strong><br>
+                    {% endif %}
+                    {% if total_ton == 0 and total_stars == 0 %}
+                        <strong>No revenue yet</strong>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

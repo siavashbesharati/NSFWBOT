@@ -117,11 +117,11 @@
                             <td>{{ transaction.package_name or 'N/A' }}</td>
                             <td>
                                 {% if transaction.payment_method == 'ton' %}
-                                    {{ transaction.amount }} TON
+                                    {{ transaction.amount|currency }} TON
                                 {% elif transaction.payment_method == 'stars' %}
-                                    {{ transaction.amount }} ⭐
+                                    {{ transaction.amount|currency }} ⭐
                                 {% else %}
-                                    ${{ transaction.amount }}
+                                    ${{ transaction.amount|currency }}
                                 {% endif %}
                             </td>
                             <td>

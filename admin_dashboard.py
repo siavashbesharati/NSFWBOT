@@ -12,6 +12,22 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'  # Change this in production
 db = Database()
 
+# Custom template filter for currency formatting
+@app.template_filter('currency')
+def format_currency(value):
+    """Format currency with maximum 2 decimal places, truncating trailing zeros"""
+    if value is None or value == 0:
+        return "0"
+    
+    # Format with 2 decimal places
+    formatted = "{:.2f}".format(float(value))
+    
+    # Remove trailing zeros and decimal point if needed
+    if '.' in formatted:
+        formatted = formatted.rstrip('0').rstrip('.')
+    
+    return formatted
+
 # Simple admin authentication
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD_HASH = generate_password_hash("admin123")  # Change this in production
@@ -93,7 +109,7 @@ def dashboard():
     # Get statistics
     total_users = db.get_user_count()
     total_transactions = db.get_transaction_count()
-    total_revenue = db.get_total_revenue()
+    payment_stats = db.get_payment_statistics()
     
     # Get recent users
     recent_users = db.get_recent_users(10)
@@ -104,7 +120,9 @@ def dashboard():
     return render_template('dashboard.html', 
                          total_users=total_users,
                          total_transactions=total_transactions,
-                         total_revenue=total_revenue,
+                         total_ton=payment_stats['total_ton'],
+                         total_stars=payment_stats['total_stars'],
+                         total_revenue=payment_stats['total_revenue'],
                          recent_users=recent_users,
                          settings=settings)
 
@@ -198,6 +216,8 @@ def payments():
                          payment_methods=payment_stats['payment_methods'],
                          recent_payments=payment_stats['recent_payments'],
                          total_transactions=payment_stats['total_transactions'],
+                         total_ton=payment_stats['total_ton'],
+                         total_stars=payment_stats['total_stars'],
                          total_revenue=payment_stats['total_revenue'],
                          paying_users=payment_stats['paying_users'])
 
@@ -494,7 +514,7 @@ def get_openrouter_models():
 
 if __name__ == '__main__':
     # Initialize database
-    db.init_db()
+    db.init_database()
     
     # Create default admin settings if they don't exist
     if not db.get_setting('bot_token'):
