@@ -112,6 +112,34 @@
                     </div>
                     <div class="form-text">Cost per 1 million output/completion tokens in USD (Venice AI default: $1.50)</div>
                 </div>
+                
+                <hr class="my-3">
+                <h6><i class="fas fa-coins"></i> Currency Exchange Rates</h6>
+                
+                <div class="mb-3">
+                    <label for="ton_price_usd" class="form-label">TON Price in USD</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" step="0.01" class="form-control" id="ton_price_usd" name="ton_price_usd" 
+                               value="{{ settings.get('ton_price_usd', '5.50') }}" 
+                               placeholder="5.50">
+                        <button type="button" class="btn btn-outline-primary" id="update_ton_price_btn" title="Fetch current TON price from API">
+                            <i class="fas fa-sync-alt"></i> Update
+                        </button>
+                    </div>
+                    <div class="form-text">Current USD price per 1 TON token (update regularly for accurate revenue calculations)</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="stars_price_usd" class="form-label">Telegram Stars Price in USD</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" step="0.001" class="form-control" id="stars_price_usd" name="stars_price_usd" 
+                               value="{{ settings.get('stars_price_usd', '0.013') }}" 
+                               placeholder="0.013">
+                    </div>
+                    <div class="form-text">USD value per 1 Telegram Star (typically $0.013 per star)</div>
+                </div>
             </div>
         </div>
     </div>
@@ -419,5 +447,59 @@ function testAI() {
         alert('Error testing AI API: ' + error.message);
     });
 }
+
+function updateTonPrice() {
+    const button = document.getElementById('update_ton_price_btn');
+    const input = document.getElementById('ton_price_usd');
+    const icon = button.querySelector('i');
+    
+    // Show loading state
+    button.disabled = true;
+    icon.classList.remove('fa-sync-alt');
+    icon.classList.add('fa-spinner', 'fa-spin');
+    
+    // Fetch current TON price
+    fetch('/api/ton_price/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the input field with the new price
+            input.value = data.price.toFixed(4);
+            
+            // Show success message
+            alert(data.message);
+            
+            // Highlight the field briefly to show it was updated
+            input.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                input.style.backgroundColor = '';
+            }, 2000);
+        } else {
+            alert('Failed to update TON price: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error updating TON price: ' + error.message);
+    })
+    .finally(() => {
+        // Reset button state
+        button.disabled = false;
+        icon.classList.remove('fa-spinner', 'fa-spin');
+        icon.classList.add('fa-sync-alt');
+    });
+}
+
+// Add event listener when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const updateButton = document.getElementById('update_ton_price_btn');
+    if (updateButton) {
+        updateButton.addEventListener('click', updateTonPrice);
+    }
+});
 </script>
 {% endblock %}

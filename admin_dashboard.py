@@ -3,6 +3,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from database import Database
 from currency_converter import currency_converter
 from ai_handler import OpenRouterAPI
+from financial_analytics import FinancialAnalytics
 import json
 import os
 import sqlite3
@@ -15,6 +16,7 @@ import asyncio
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'  # Change this in production
 db = Database()
+financial_analytics = FinancialAnalytics(db)
 
 # Custom template filter for currency formatting
 @app.template_filter('currency')
@@ -309,6 +311,10 @@ def settings():
         input_token_price_per_1m = request.form.get('input_token_price_per_1m', '0.50')
         output_token_price_per_1m = request.form.get('output_token_price_per_1m', '1.50')
         
+        # Currency exchange rates
+        ton_price_usd = request.form.get('ton_price_usd', '5.50')
+        stars_price_usd = request.form.get('stars_price_usd', '0.013')
+        
         # Dashboard settings
         dashboard_host = request.form.get('dashboard_host', '127.0.0.1')
         dashboard_port = request.form.get('dashboard_port', '5000')
@@ -342,6 +348,8 @@ def settings():
             'enable_conversation_memory': enable_conversation_memory,
             'input_token_price_per_1m': input_token_price_per_1m,
             'output_token_price_per_1m': output_token_price_per_1m,
+            'ton_price_usd': ton_price_usd,
+            'stars_price_usd': stars_price_usd,
             'dashboard_host': dashboard_host,
             'dashboard_port': dashboard_port,
             'admin_username': admin_username,
@@ -409,6 +417,35 @@ def get_stats():
         'active_packages': db.get_active_package_count()
     }
     return jsonify(stats)
+
+@app.route('/api/ton_price/update', methods=['POST'])
+@login_required
+def update_ton_price():
+    """Fetch current TON price from API and update the setting"""
+    try:
+        # Get current TON price using the currency converter
+        current_price = currency_converter.get_ton_to_usd_rate()
+        
+        if current_price and current_price > 0:
+            # Update the setting in database
+            db.update_setting('ton_price_usd', str(current_price))
+            
+            return jsonify({
+                'success': True, 
+                'price': current_price,
+                'message': f'TON price updated to ${current_price:.4f} USD'
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Failed to fetch TON price from API'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False, 
+            'message': f'Error updating TON price: {str(e)}'
+        })
 
 @app.route('/user/<int:user_id>')
 @login_required
@@ -602,6 +639,9 @@ def statistics():
         stars_amount = payment_stats.get('stars', 0)
         usd_data = currency_converter.get_total_usd_value(ton_amount, stars_amount)
         
+        # Get financial overview
+        financial_overview = financial_analytics.get_financial_kpis()
+        
         # Get detailed analytics
         stats_data = {
             'overview': {
@@ -637,10 +677,57 @@ def statistics():
             stats_data['payment_breakdown']['ton_percentage'] = (payment_stats.get('ton', 0) / total_payments) * 100
             stats_data['payment_breakdown']['stars_percentage'] = (payment_stats.get('stars', 0) / total_payments) * 100
         
-        return render_template('statistics.html', stats=stats_data, usd_data=usd_data)
+        return render_template('statistics.html', stats=stats_data, usd_data=usd_data, financial_overview=financial_overview)
         
     except Exception as e:
         flash(f'Error loading statistics: {str(e)}')
+        return redirect(url_for('dashboard'))
+
+@app.route('/financial_analytics')
+@login_required 
+def financial_analytics_dashboard():
+    """Financial Analytics Dashboard - Revenue, Spending, and Profit Analysis"""
+    try:
+        # Get date range from query parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Get comprehensive financial analysis
+        financial_data = financial_analytics.get_net_profit_analysis(start_date, end_date)
+        
+        # Get KPIs for quick overview
+        kpis = financial_analytics.get_financial_kpis()
+        
+        # Format data for templates
+        financial_summary = {
+            'total_revenue': financial_data['financial_summary']['total_revenue_usd'],
+            'total_spending': financial_data['financial_summary']['total_spending_usd'], 
+            'net_profit': financial_data['financial_summary']['net_profit_usd'],
+            'profit_margin': financial_data['financial_summary']['profit_margin_percent'],
+            'roi': financial_data['financial_summary']['roi_percent'],
+            'is_profitable': financial_data['financial_summary']['is_profitable']
+        }
+        
+        # Revenue breakdown
+        revenue_breakdown = financial_data['revenue_data']['revenue_by_method']
+        
+        # Spending breakdown  
+        spending_breakdown = financial_data['spending_data']['spending_by_type']
+        
+        # Daily trends for charts
+        daily_trends = financial_data['daily_profit_trends']
+        
+        return render_template('financial_analytics.html',
+                             financial_summary=financial_summary,
+                             revenue_breakdown=revenue_breakdown,
+                             spending_breakdown=spending_breakdown,
+                             daily_trends=daily_trends,
+                             kpis=kpis,
+                             start_date=start_date,
+                             end_date=end_date)
+        
+    except Exception as e:
+        flash(f'Error loading financial analytics: {str(e)}')
         return redirect(url_for('dashboard'))
 
 @app.route('/message_history')

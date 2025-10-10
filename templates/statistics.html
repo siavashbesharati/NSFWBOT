@@ -126,6 +126,102 @@
         </div>
     </div>
 
+    <!-- Financial Overview -->
+    {% if financial_overview.overall %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">💰 Financial Overview</h6>
+                    <a href="{{ url_for('financial_analytics_dashboard') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-chart-line"></i> View Detailed Analytics
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Revenue</div>
+                                <div class="h5 mb-2 font-weight-bold text-success">
+                                    ${{ "%.2f"|format(financial_overview.overall.total_revenue_usd or 0) }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">AI Spending</div>
+                                <div class="h5 mb-2 font-weight-bold text-warning">
+                                    ${{ "%.2f"|format(financial_overview.overall.total_spending_usd or 0) }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="text-xs font-weight-bold {% if financial_overview.overall.is_profitable %}text-success{% else %}text-danger{% endif %} text-uppercase mb-1">Net Profit</div>
+                                <div class="h5 mb-2 font-weight-bold {% if financial_overview.overall.is_profitable %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ "%.2f"|format(financial_overview.overall.net_profit_usd or 0) }}
+                                </div>
+                                <small class="{% if financial_overview.overall.is_profitable %}text-success{% else %}text-danger{% endif %}">
+                                    {% if financial_overview.overall.is_profitable %}✅ Profitable{% else %}⚠️ Loss{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Profit Margin</div>
+                                <div class="h5 mb-2 font-weight-bold text-info">
+                                    {{ "%.1f"|format(financial_overview.overall.profit_margin_percent or 0) }}%
+                                </div>
+                                <small class="text-muted">Revenue - Costs</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if financial_overview.this_month %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">This Month Performance</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Revenue:</small>
+                                    <div class="font-weight-bold">${{ "%.2f"|format(financial_overview.this_month.total_revenue_usd or 0) }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Profit:</small>
+                                    <div class="font-weight-bold {% if financial_overview.this_month.net_profit_usd >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        ${{ "%.2f"|format(financial_overview.this_month.net_profit_usd or 0) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Growth Trends</h6>
+                            {% if financial_overview.growth_metrics %}
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Revenue Growth:</small>
+                                        <div class="font-weight-bold {% if financial_overview.growth_metrics.revenue_growth_percent > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ "%.1f"|format(financial_overview.growth_metrics.revenue_growth_percent or 0) }}%
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Spending Trend:</small>
+                                        <div class="font-weight-bold">
+                                            {{ financial_overview.growth_metrics.spending_trend | title if financial_overview.growth_metrics.spending_trend else 'Stable' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Venice API Status -->
     <div class="row mb-4">
         <div class="col-12">

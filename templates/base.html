@@ -105,6 +105,9 @@
                     <a class="nav-link {% if request.endpoint == 'statistics' %}active{% endif %}" href="{{ url_for('statistics') }}">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </a>
+                    <a class="nav-link {% if request.endpoint == 'financial_analytics_dashboard' %}active{% endif %}" href="{{ url_for('financial_analytics_dashboard') }}">
+                        <i class="fas fa-chart-line"></i> Financial Analytics
+                    </a>
                     <a class="nav-link {% if request.endpoint == 'message_history' %}active{% endif %}" href="{{ url_for('message_history') }}">
                         <i class="fas fa-history"></i> Message History
                     </a>
