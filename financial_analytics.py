@@ -32,15 +32,16 @@ class FinancialAnalytics:
             
             # Build date filter
             date_filter = ""
+            where_clause = "WHERE cost > 0"
             params = []
             if start_date and end_date:
-                date_filter = "WHERE DATE(timestamp) BETWEEN ? AND ?"
+                date_filter = "AND DATE(timestamp) BETWEEN ? AND ?"
                 params = [start_date, end_date]
             elif start_date:
-                date_filter = "WHERE DATE(timestamp) >= ?"
+                date_filter = "AND DATE(timestamp) >= ?"
                 params = [start_date]
             elif end_date:
-                date_filter = "WHERE DATE(timestamp) <= ?"
+                date_filter = "AND DATE(timestamp) <= ?"
                 params = [end_date]
             
             # Get total spending and token usage
@@ -53,8 +54,8 @@ class FinancialAnalytics:
                     SUM(total_tokens) as total_tokens_sum,
                     AVG(cost) as avg_cost_per_message
                 FROM message_history 
+                {where_clause}
                 {date_filter}
-                AND cost > 0
             ''', params)
             
             result = cursor.fetchone()
@@ -67,8 +68,8 @@ class FinancialAnalytics:
                     SUM(cost) as type_cost,
                     SUM(total_tokens) as type_tokens
                 FROM message_history 
+                {where_clause}
                 {date_filter}
-                AND cost > 0
                 GROUP BY message_type
             ''', params)
             
@@ -88,8 +89,8 @@ class FinancialAnalytics:
                     SUM(cost) as daily_cost,
                     SUM(total_tokens) as daily_tokens
                 FROM message_history 
+                {where_clause}
                 {date_filter}
-                AND cost > 0
                 GROUP BY DATE(timestamp)
                 ORDER BY date DESC
                 LIMIT 30
@@ -147,15 +148,16 @@ class FinancialAnalytics:
             
             # Build date filter
             date_filter = ""
+            where_clause = "WHERE status = 'completed'"
             params = []
             if start_date and end_date:
-                date_filter = "WHERE DATE(created_date) BETWEEN ? AND ?"
+                date_filter = "AND DATE(created_date) BETWEEN ? AND ?"
                 params = [start_date, end_date]
             elif start_date:
-                date_filter = "WHERE DATE(created_date) >= ?"
+                date_filter = "AND DATE(created_date) >= ?"
                 params = [start_date]
             elif end_date:
-                date_filter = "WHERE DATE(created_date) <= ?"
+                date_filter = "AND DATE(created_date) <= ?"
                 params = [end_date]
             
             # Get currency exchange rates from settings
@@ -182,8 +184,8 @@ class FinancialAnalytics:
                         ELSE amount 
                     END) as avg_payment_usd
                 FROM transactions 
+                {where_clause}
                 {date_filter}
-                AND status = 'completed'
             ''', params)
             
             result = cursor.fetchone()
@@ -200,8 +202,8 @@ class FinancialAnalytics:
                         ELSE amount 
                     END) as method_revenue_usd
                 FROM transactions 
+                {where_clause}
                 {date_filter}
-                AND status = 'completed'
                 GROUP BY payment_method
             ''', params)
             
@@ -230,8 +232,8 @@ class FinancialAnalytics:
                         ELSE amount 
                     END) as daily_revenue_usd
                 FROM transactions 
+                {where_clause}
                 {date_filter}
-                AND status = 'completed'
                 GROUP BY DATE(created_date)
                 ORDER BY date DESC
                 LIMIT 30
