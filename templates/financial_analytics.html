@@ -20,28 +20,28 @@
     <div class="col-md-3">
         <div class="stat-card {% if financial_summary.total_revenue > 0 %}green{% endif %}">
             <h6><i class="fas fa-dollar-sign"></i> Total Revenue</h6>
-            <h3>${{ "%.2f"|format(financial_summary.total_revenue) }}</h3>
+            <h3>${{ financial_summary.total_revenue|precise_number }}</h3>
             <small>Gross income from all payments</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card orange">
             <h6><i class="fas fa-credit-card"></i> AI Spending</h6>
-            <h3>${{ "%.2f"|format(financial_summary.total_spending) }}</h3>
+            <h3>${{ financial_summary.total_spending|precise_number }}</h3>
             <small>Total cost of AI API calls</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card {% if financial_summary.is_profitable %}green{% else %}purple{% endif %}">
             <h6><i class="fas fa-chart-pie"></i> Net Profit</h6>
-            <h3>${{ "%.2f"|format(financial_summary.net_profit) }}</h3>
+            <h3>${{ financial_summary.net_profit|precise_number }}</h3>
             <small>{% if financial_summary.is_profitable %}✅ Profitable{% else %}⚠️ Loss{% endif %}</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card {% if financial_summary.profit_margin > 50 %}green{% elif financial_summary.profit_margin > 0 %}purple{% else %}orange{% endif %}">
             <h6><i class="fas fa-percentage"></i> Profit Margin</h6>
-            <h3>{{ "%.1f"|format(financial_summary.profit_margin) }}%</h3>
+            <h3>{{ financial_summary.profit_margin|precise_number }}%</h3>
             <small>Revenue - Costs</small>
         </div>
     </div>
@@ -60,32 +60,32 @@
                     <div class="col-md-4">
                         <h6>This Month</h6>
                         <div class="mb-2">
-                            <strong>Revenue:</strong> ${{ "%.2f"|format(kpis.this_month.total_revenue_usd or 0) }}
+                            <strong>Revenue:</strong> ${{ (kpis.this_month.total_revenue_usd or 0)|precise_number }}
                             {% if kpis.growth_metrics.revenue_growth_percent %}
                                 <span class="badge {% if kpis.growth_metrics.revenue_growth_percent > 0 %}bg-success{% else %}bg-danger{% endif %} ms-2">
-                                    {{ "%.1f"|format(kpis.growth_metrics.revenue_growth_percent) }}%
+                                    {{ kpis.growth_metrics.revenue_growth_percent|precise_number }}%
                                 </span>
                             {% endif %}
                         </div>
                         <div class="mb-2">
-                            <strong>Profit:</strong> ${{ "%.2f"|format(kpis.this_month.net_profit_usd or 0) }}
+                            <strong>Profit:</strong> ${{ (kpis.this_month.net_profit_usd or 0)|precise_number }}
                             {% if kpis.growth_metrics.profit_growth_percent %}
                                 <span class="badge {% if kpis.growth_metrics.profit_growth_percent > 0 %}bg-success{% else %}bg-danger{% endif %} ms-2">
-                                    {{ "%.1f"|format(kpis.growth_metrics.profit_growth_percent) }}%
+                                    {{ kpis.growth_metrics.profit_growth_percent|precise_number }}%
                                 </span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="col-md-4">
                         <h6>All Time Totals</h6>
-                        <div class="mb-2"><strong>Revenue:</strong> ${{ "%.2f"|format(kpis.overall.total_revenue_usd or 0) }}</div>
-                        <div class="mb-2"><strong>Spending:</strong> ${{ "%.2f"|format(kpis.overall.total_spending_usd or 0) }}</div>
-                        <div class="mb-2"><strong>Net Profit:</strong> ${{ "%.2f"|format(kpis.overall.net_profit_usd or 0) }}</div>
+                        <div class="mb-2"><strong>Revenue:</strong> ${{ (kpis.overall.total_revenue_usd or 0)|precise_number }}</div>
+                        <div class="mb-2"><strong>Spending:</strong> ${{ (kpis.overall.total_spending_usd or 0)|precise_number }}</div>
+                        <div class="mb-2"><strong>Net Profit:</strong> ${{ (kpis.overall.net_profit_usd or 0)|precise_number }}</div>
                     </div>
                     <div class="col-md-4">
                         <h6>Performance Metrics</h6>
-                        <div class="mb-2"><strong>ROI:</strong> {{ "%.1f"|format(kpis.overall.roi_percent or 0) }}%</div>
-                        <div class="mb-2"><strong>Margin:</strong> {{ "%.1f"|format(kpis.overall.profit_margin_percent or 0) }}%</div>
+                        <div class="mb-2"><strong>ROI:</strong> {{ (kpis.overall.roi_percent or 0)|precise_number }}%</div>
+                        <div class="mb-2"><strong>Margin:</strong> {{ (kpis.overall.profit_margin_percent or 0)|precise_number }}%</div>
                         <div class="mb-2">
                             <strong>Status:</strong> 
                             {% if kpis.overall.is_profitable %}
@@ -115,7 +115,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
                                 <span><strong>{{ method | title }}</strong></span>
-                                <span>${{ "%.2f"|format(data.total_revenue_usd) }}</span>
+                                <span>${{ data.total_revenue_usd|precise_number }}</span>
                             </div>
                             <div class="progress mb-2" style="height: 20px;">
                                 <div class="progress-bar bg-success" role="progressbar" 
@@ -124,7 +124,7 @@
                                 </div>
                             </div>
                             <small class="text-muted">
-                                {{ data.currency }}: {{ "%.2f"|format(data.original_amount) }} 
+                                {{ data.currency }}: {{ data.original_amount|precise_number }} 
                                 {% if data.exchange_rate != 1.0 %}
                                     (Rate: ${{ "%.3f"|format(data.exchange_rate) }})
                                 {% endif %}
@@ -149,7 +149,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
                                 <span><strong>{{ type | title }} Messages</strong></span>
-                                <span>${{ "%.4f"|format(data.total_cost) }}</span>
+                                <span>${{ data.total_cost|precise_number }}</span>
                             </div>
                             <div class="progress mb-2" style="height: 20px;">
                                 <div class="progress-bar bg-warning" role="progressbar" 
@@ -159,7 +159,7 @@
                             </div>
                             <small class="text-muted">
                                 {{ data.total_tokens | number_format }} tokens, 
-                                Avg: ${{ "%.6f"|format(data.total_cost / data.message_count if data.message_count > 0 else 0) }}/msg
+                                Avg: ${{ ((data.total_cost / data.message_count) if data.message_count > 0 else 0)|precise_number }}/msg
                             </small>
                         </div>
                     {% endfor %}
@@ -196,12 +196,12 @@
                             {% for day in daily_trends[:15] %}
                                 <tr>
                                     <td>{{ day.date }}</td>
-                                    <td class="text-success">${{ "%.2f"|format(day.revenue) }}</td>
-                                    <td class="text-warning">${{ "%.4f"|format(day.spending) }}</td>
+                                    <td class="text-success">${{ day.revenue|precise_number }}</td>
+                                    <td class="text-warning">${{ day.spending|precise_number }}</td>
                                     <td class="{% if day.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                        ${{ "%.2f"|format(day.profit) }}
+                                        ${{ day.profit|precise_number }}
                                     </td>
-                                    <td>{{ "%.1f"|format(day.margin) }}%</td>
+                                    <td>{{ day.margin|precise_number }}%</td>
                                     <td>
                                         {% if day.profit > 0 %}
                                             <span class="badge bg-success">Profit</span>
@@ -267,7 +267,7 @@
                         <h6>Recommendations</h6>
                         <ul class="list-unstyled">
                             {% if financial_summary.total_spending > financial_summary.total_revenue * 0.8 %}
-                                <li class="text-warning mb-2">💡 AI costs are high ({{ "%.1f"|format(financial_summary.total_spending / financial_summary.total_revenue * 100 if financial_summary.total_revenue > 0 else 0) }}% of revenue)</li>
+                                <li class="text-warning mb-2">💡 AI costs are high ({{ ((financial_summary.total_spending / financial_summary.total_revenue * 100) if financial_summary.total_revenue > 0 else 0)|precise_number }}% of revenue)</li>
                             {% endif %}
                             
                             {% if financial_summary.total_revenue < 100 %}

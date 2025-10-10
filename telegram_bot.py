@@ -264,7 +264,7 @@ You can now start a new conversation from scratch! 🚀
 🖼️ Images: {user_data['image_messages_left']}
 🎥 Videos: {user_data['video_messages_left']}
 
-💰 Total Spent: ${user_data['total_spent']:.2f}
+💰 Total Spent: ${user_data['total_spent']}
         """
         
         keyboard = [

@@ -4,6 +4,24 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 import os
 
+def format_precise_number(value):
+    """Format numbers with full precision, only removing trailing zeros"""
+    if value is None or value == 0:
+        return "0"
+    
+    try:
+        num = float(value)
+        # Use reasonable precision formatting (8 decimal places for financial data)
+        formatted = f"{num:.8f}"
+        
+        # Remove trailing zeros and decimal point if needed
+        if '.' in formatted:
+            formatted = formatted.rstrip('0').rstrip('.')
+        
+        return formatted
+    except (ValueError, TypeError):
+        return str(value)
+
 class Database:
     def __init__(self, db_path: str = "bot_database.db"):
         self.db_path = db_path
@@ -925,9 +943,9 @@ class Database:
             total_cost = input_cost + output_cost
             
             return {
-                'input_cost': round(input_cost, 6),
-                'output_cost': round(output_cost, 6),
-                'total_cost': round(total_cost, 6),
+                'input_cost': input_cost,
+                'output_cost': output_cost,
+                'total_cost': total_cost,
                 'input_tokens': prompt_tokens,
                 'output_tokens': completion_tokens
             }
@@ -962,9 +980,9 @@ class Database:
             calculated_cost = cost_info['total_cost']
             
             print(f"💰 Message Cost Calculation:")
-            print(f"   Input Tokens: {prompt_tokens:,} = ${cost_info['input_cost']:.6f}")
-            print(f"   Output Tokens: {completion_tokens:,} = ${cost_info['output_cost']:.6f}")
-            print(f"   Total Cost: ${calculated_cost:.6f}")
+            print(f"   Input Tokens: {prompt_tokens:,} = ${format_precise_number(cost_info['input_cost'])}")
+            print(f"   Output Tokens: {completion_tokens:,} = ${format_precise_number(cost_info['output_cost'])}")
+            print(f"   Total Cost: ${format_precise_number(calculated_cost)}")
             
             cursor.execute('''
                 INSERT INTO message_history 

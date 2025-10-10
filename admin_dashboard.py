@@ -21,28 +21,69 @@ financial_analytics = FinancialAnalytics(db)
 # Custom template filter for currency formatting
 @app.template_filter('currency')
 def format_currency(value):
-    """Format currency with maximum 2 decimal places, truncating trailing zeros"""
+    """Format currency preserving all precision but removing trailing zeros"""
     if value is None or value == 0:
         return "0"
     
-    # Format with 2 decimal places
-    formatted = "{:.2f}".format(float(value))
-    
-    # Remove trailing zeros and decimal point if needed
-    if '.' in formatted:
-        formatted = formatted.rstrip('0').rstrip('.')
-    
-    return formatted
+    try:
+        # Convert to float and format with reasonable precision (8 decimal places)
+        num = float(value)
+        # Format with enough decimal places to preserve meaningful precision
+        formatted = f"{num:.8f}"
+        
+        # Remove trailing zeros and decimal point if needed
+        if '.' in formatted:
+            formatted = formatted.rstrip('0').rstrip('.')
+        
+        return formatted
+    except (ValueError, TypeError):
+        return str(value)
 
-# Custom template filter for number formatting
+# Custom template filter for number formatting  
 @app.template_filter('number_format')
 def format_number(value):
-    """Format numbers with thousands separators"""
+    """Format numbers with thousands separators, preserving precision"""
     if value is None:
         return "0"
     
     try:
-        return "{:,}".format(int(value))
+        # Check if it's a whole number
+        num = float(value)
+        if num == int(num):
+            return "{:,}".format(int(num))
+        else:
+            # Format with reasonable precision then remove trailing zeros
+            formatted = f"{num:.8f}"
+            if '.' in formatted:
+                formatted = formatted.rstrip('0').rstrip('.')
+            
+            # Add thousands separators if possible
+            if '.' in formatted:
+                integer_part, decimal_part = formatted.split('.')
+                integer_part = "{:,}".format(int(integer_part))
+                return f"{integer_part}.{decimal_part}"
+            else:
+                return "{:,}".format(int(float(formatted)))
+    except (ValueError, TypeError):
+        return str(value)
+
+# Custom template filter for precise number formatting (for financial data)
+@app.template_filter('precise_number')
+def format_precise_number(value):
+    """Format numbers with full precision, only removing trailing zeros"""
+    if value is None or value == 0:
+        return "0"
+    
+    try:
+        num = float(value)
+        # Use reasonable precision formatting (8 decimal places should be enough for financial data)
+        formatted = f"{num:.8f}"
+        
+        # Remove trailing zeros and decimal point if needed
+        if '.' in formatted:
+            formatted = formatted.rstrip('0').rstrip('.')
+        
+        return formatted
     except (ValueError, TypeError):
         return str(value)
 
@@ -433,7 +474,7 @@ def update_ton_price():
             return jsonify({
                 'success': True, 
                 'price': current_price,
-                'message': f'TON price updated to ${current_price:.4f} USD'
+                'message': f'TON price updated to ${format_precise_number(current_price)} USD'
             })
         else:
             return jsonify({

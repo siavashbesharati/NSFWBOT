@@ -8,6 +8,24 @@ import requests
 import json
 from datetime import datetime
 
+def format_precise_number(value):
+    """Format numbers with full precision, only removing trailing zeros"""
+    if value is None or value == 0:
+        return "0"
+    
+    try:
+        num = float(value)
+        # Use reasonable precision formatting (8 decimal places)
+        formatted = f"{num:.8f}"
+        
+        # Remove trailing zeros and decimal point if needed
+        if '.' in formatted:
+            formatted = formatted.rstrip('0').rstrip('.')
+        
+        return formatted
+    except (ValueError, TypeError):
+        return str(value)
+
 def fetch_openrouter_models():
     """
     Fetch available models from OpenRouter API
@@ -25,7 +43,7 @@ def fetch_openrouter_models():
         response = requests.get(url, timeout=10)
         
         print(f"📊 Response Status: {response.status_code}")
-        print(f"⏱️  Response Time: {response.elapsed.total_seconds():.2f}s")
+        print(f"⏱️  Response Time: {response.elapsed.total_seconds()}s")
         print("-" * 60)
         
         if response.status_code == 200:
@@ -50,7 +68,7 @@ def fetch_openrouter_models():
                 prompt_price = float(pricing.get('prompt', 0)) * 1000  # Per 1K tokens
                 completion_price = float(pricing.get('completion', 0)) * 1000
                 
-                print(f"   Pricing: ${prompt_price:.6f} prompt / ${completion_price:.6f} completion (per 1K tokens)")
+                print(f"   Pricing: ${format_precise_number(prompt_price)} prompt / ${format_precise_number(completion_price)} completion (per 1K tokens)")
                 
                 # Input modalities
                 modalities = model.get('architecture', {}).get('input_modalities', [])

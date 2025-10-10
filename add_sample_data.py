@@ -61,7 +61,7 @@ def add_sample_data():
         payment_method = random.choice(['ton', 'stars'])
         
         if payment_method == 'ton':
-            amount = round(random.uniform(1.0, 10.0), 2)
+            amount = random.uniform(1.0, 10.0)
         else:
             amount = random.randint(100, 1000)
         

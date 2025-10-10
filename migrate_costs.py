@@ -4,7 +4,7 @@ Migration script to calculate costs for existing message_history records
 and ensure all financial data is properly populated
 """
 
-from database import Database
+from database import Database, format_precise_number
 import json
 
 def migrate_message_costs():
@@ -25,8 +25,8 @@ def migrate_message_costs():
     input_price = settings.get('input_token_price_per_1m', 0.0) / 1_000_000  # Price per token
     output_price = settings.get('output_token_price_per_1m', 0.0) / 1_000_000  # Price per token
     
-    print(f"Input token price: ${input_price:.8f} per token")
-    print(f"Output token price: ${output_price:.8f} per token")
+    print(f"Input token price: ${format_precise_number(input_price)} per token")
+    print(f"Output token price: ${format_precise_number(output_price)} per token")
     
     # Find messages without cost calculation
     cursor.execute("""
@@ -57,7 +57,7 @@ def migrate_message_costs():
             """, (cost, msg_id))
             
             updated_count += 1
-            print(f"  Updated message {msg_id}: {prompt_tokens} + {completion_tokens} tokens = ${cost:.6f}")
+            print(f"  Updated message {msg_id}: {prompt_tokens} + {completion_tokens} tokens = ${format_precise_number(cost)}")
     
     conn.commit()
     print(f"Updated {updated_count} messages with cost calculations")
@@ -71,7 +71,7 @@ def migrate_message_costs():
     
     print(f"\nFinal summary:")
     print(f"  Messages with cost: {messages_with_cost}")
-    print(f"  Total AI spending: ${total_spending:.6f}")
+    print(f"  Total AI spending: ${format_precise_number(total_spending)}")
     
     conn.close()
 
@@ -92,7 +92,7 @@ def show_financial_summary():
     
     print(f"AI Spending:")
     print(f"  Messages with cost: {total_messages}")
-    print(f"  Total spending: ${total_spending:.6f}")
+    print(f"  Total spending: ${format_precise_number(total_spending)}")
     
     # Revenue
     cursor.execute("SELECT COUNT(*), SUM(amount) FROM transactions WHERE status = 'completed'")
@@ -102,15 +102,15 @@ def show_financial_summary():
     
     print(f"\nRevenue:")
     print(f"  Completed payments: {total_payments}")
-    print(f"  Total revenue: ${total_revenue:.2f}")
+    print(f"  Total revenue: ${format_precise_number(total_revenue)}")
     
     # Net Profit
     net_profit = total_revenue - total_spending
     profit_margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
     
     print(f"\nProfit Analysis:")
-    print(f"  Net profit: ${net_profit:.6f}")
-    print(f"  Profit margin: {profit_margin:.2f}%")
+    print(f"  Net profit: ${format_precise_number(net_profit)}")
+    print(f"  Profit margin: {format_precise_number(profit_margin)}%")
     
     # Payment methods breakdown
     cursor.execute("""
@@ -123,7 +123,7 @@ def show_financial_summary():
     print(f"\nRevenue by payment method:")
     for row in cursor.fetchall():
         method, count, amount = row
-        print(f"  {method}: {count} payments, ${amount:.2f}")
+        print(f"  {method}: {count} payments, ${format_precise_number(amount)}")
     
     conn.close()
 
