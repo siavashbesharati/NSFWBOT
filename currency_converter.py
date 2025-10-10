@@ -84,6 +84,14 @@ class CurrencyConverter:
             'ton_rate': self.get_ton_to_usd_rate(),
             'stars_rate': self.get_stars_to_usd_rate()
         }
+    
+    def get_cache_timestamp(self) -> float:
+        """Get the timestamp of when the cache was last updated"""
+        return self._cache_timestamp
+    
+    def get_ton_usd_rate(self) -> float:
+        """Alias for get_ton_to_usd_rate for compatibility"""
+        return self.get_ton_to_usd_rate()
 
 # Global instance for reuse
 currency_converter = CurrencyConverter()

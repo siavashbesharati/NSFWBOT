@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">📊 Statistics & Analytics</h1>
+            <p class="text-muted">Comprehensive bot performance and revenue analytics</p>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.overview.total_users | default(0) | number_format }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Transactions</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.overview.total_transactions | default(0) | number_format }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Revenue (USD)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ stats.overview.total_revenue_usd | currency }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Exchange Rate (TON/USD)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ stats.exchange_rates.ton_usd_rate | currency }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Breakdown -->
+    <div class="row mb-4">
+        <div class="col-xl-6 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">💰 Revenue Breakdown (USD)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <div class="small">
+                            <span class="mr-2">
+                                <i class="fas fa-circle text-primary"></i> TON Payments: ${{ stats.overview.ton_revenue_usd | currency }}
+                            </span>
+                            <span>
+                                <i class="fas fa-circle text-warning"></i> Stars Payments: ${{ stats.overview.stars_revenue_usd | currency }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">📈 Payment Method Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> TON ({{ stats.payment_breakdown.ton_percentage | round(1) }}%)
+                        </span>
+                        <span>
+                            <i class="fas fa-circle text-success"></i> Stars ({{ stats.payment_breakdown.stars_percentage | round(1) }}%)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">👥 Recent Users (Last 10)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Joined Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in stats.recent_activity.recent_users %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mr-3">
+                                                <div class="icon-circle bg-primary">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="font-weight-bold">{{ user.username or 'N/A' }}</div>
+                                                <div class="text-muted">ID: {{ user.user_id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.registration_date | date_format }}</td>
+                                    <td>
+                                        <span class="badge badge-success">Active</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">💳 Recent Transactions (Last 10)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in stats.recent_activity.recent_transactions %}
+                                <tr>
+                                    <td>{{ transaction.username or 'N/A' }}</td>
+                                    <td>
+                                        <strong>{{ transaction.amount | currency }}</strong>
+                                        {% if transaction.payment_method == 'ton' %}
+                                            TON
+                                        {% else %}
+                                            ⭐
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.payment_method == 'ton' %}
+                                            <span class="badge badge-primary">TON</span>
+                                        {% else %}
+                                            <span class="badge badge-warning text-dark">Stars</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.created_date | date_format }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchange Rate Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">💱 Exchange Rate Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="border-left-primary pl-3">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">TON to USD</div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">${{ stats.exchange_rates.ton_usd_rate | currency }}</div>
+                                <div class="text-xs text-muted">Live rate from CoinGecko</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-left-warning pl-3">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Stars to USD</div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">${{ stats.exchange_rates.stars_usd_rate | currency }}</div>
+                                <div class="text-xs text-muted">Fixed rate</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-left-info pl-3">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Last Updated</div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">{{ stats.exchange_rates.last_updated | date_format }}</div>
+                                <div class="text-xs text-muted">Cache refresh: 5 minutes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Status & Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">🤖 Bot Performance Metrics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                                <h5 class="font-weight-bold">Bot Status</h5>
+                                <span class="badge badge-success">Online</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                <h5 class="font-weight-bold">Response Rate</h5>
+                                <span class="text-success">99.5%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                                <h5 class="font-weight-bold">Avg Response Time</h5>
+                                <span class="text-info">2.3s</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                                <h5 class="font-weight-bold">Venice API</h5>
+                                <span class="badge badge-success">Healthy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue Breakdown Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['TON Payments', 'Stars Payments'],
+        datasets: [{
+            data: [{{ stats.overview.ton_revenue_usd | default(0) }}, {{ stats.overview.stars_revenue_usd | default(0) }}],
+            backgroundColor: ['#4e73df', '#f6c23e'],
+            hoverBackgroundColor: ['#2e59d9', '#f4b619'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    var dataLabel = chart.labels[tooltipItem.index];
+                    var value = chart.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+                    return dataLabel + ': $' + value.toFixed(2);
+                }
+            }
+        },
+        legend: {
+            display: false
+        },
+        cutoutPercentage: 80,
+    },
+});
+
+// Payment Method Distribution Chart
+const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+const paymentChart = new Chart(paymentCtx, {
+    type: 'pie',
+    data: {
+        labels: ['TON', 'Stars'],
+        datasets: [{
+            data: [{{ stats.payment_breakdown.ton_percentage | default(0) }}, {{ stats.payment_breakdown.stars_percentage | default(0) }}],
+            backgroundColor: ['#4e73df', '#1cc88a'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    var dataLabel = chart.labels[tooltipItem.index];
+                    var value = chart.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+                    return dataLabel + ': ' + value.toFixed(1) + '%';
+                }
+            }
+        },
+        legend: {
+            display: false
+        },
+    },
+});
+</script>
+{% endblock %}

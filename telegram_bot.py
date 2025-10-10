@@ -129,6 +129,33 @@ Use /help for more commands
         except Exception as e:
             await update.message.reply_text(f"❌ Error testing API: {str(e)}")
     
+    async def venice_status_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /venicestatus command - Check Venice API status and account balance"""
+        user_id = update.effective_user.id
+        
+        # Check if user is admin
+        admin_chat_id = self.db.get_setting('admin_chat_id', '0')
+        try:
+            admin_id = int(admin_chat_id) if admin_chat_id else 0
+        except ValueError:
+            admin_id = 0
+            
+        if user_id != admin_id or admin_id == 0:
+            await update.message.reply_text("❌ This command is only available for administrators.")
+            return
+        
+        await update.message.reply_text("📊 Checking Venice API status...")
+        
+        try:
+            # Get Venice status
+            status = await self.ai_handler.get_venice_account_status()
+            formatted_status = self.ai_handler.format_venice_status(status)
+            
+            await update.message.reply_text(formatted_status, parse_mode='Markdown')
+                
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error checking Venice status: {str(e)}")
+    
     async def reset_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /reset command - clear conversation history"""
         try:
@@ -628,7 +655,8 @@ Use /packages to buy more credits!
                 BotCommand("packages", "💎 Browse message packages"),
                 BotCommand("balance", "💰 Check your message balance"),
                 BotCommand("reset", "🔄 Reset conversation history"),
-                BotCommand("testapi", "🧪 Test AI connection (admin only)")
+                BotCommand("testapi", "🧪 Test AI connection (admin only)"),
+                BotCommand("venicestatus", "📊 Check Venice API status (admin only)")
             ]
             
             await application.bot.set_my_commands(commands)
@@ -654,6 +682,7 @@ Use /packages to buy more credits!
             self.app.add_handler(CommandHandler("help", self.help_command))
             self.app.add_handler(CommandHandler("reset", self.reset_command))
             self.app.add_handler(CommandHandler("testapi", self.test_api_command))
+            self.app.add_handler(CommandHandler("venicestatus", self.venice_status_command))
             self.app.add_handler(CommandHandler("packages", self.packages_command))
             self.app.add_handler(CommandHandler("dashboard", self.dashboard_command))
             self.app.add_handler(CommandHandler("balance", self.balance_command))

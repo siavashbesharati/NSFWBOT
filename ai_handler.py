@@ -84,7 +84,7 @@ class OpenRouterAPI:
             return "Sorry, I encountered an error while generating a response. Please try again."
     
     async def _venice_direct_request(self, user_message: str, user_context: str = None, conversation_history: list = None) -> str:
-        """Direct HTTP request to Venice AI using requests library (reads from database)"""
+        """Direct HTTP request to Venice AI with rate limiting and header monitoring"""
         try:
             # Read from database settings (no more hardcoding)
             api_key = self.api_key
@@ -125,7 +125,8 @@ class OpenRouterAPI:
             
             headers = {
                 'Authorization': f'Bearer {api_key}',  # From database
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept-Encoding': 'gzip, br'  # Request compression for efficiency
             }
             
             print(f"🔍 Venice Direct Request (FROM DATABASE):")
@@ -141,18 +142,131 @@ class OpenRouterAPI:
                 timeout=30
             )
             
+            # Log Venice response headers for monitoring
+            self._log_venice_headers(response)
+            
             print(f"📡 Venice Response Status: {response.status_code}")
             
             if response.status_code == 200:
                 response_data = response.json()
                 return response_data["choices"][0]["message"]["content"].strip()
+            elif response.status_code == 429:
+                # Rate limit exceeded - handle with exponential backoff
+                return await self._handle_rate_limit(response, user_message, user_context, conversation_history)
+            elif response.status_code >= 500:
+                # Server error - should retry with exponential backoff
+                print(f"🔄 Venice server error {response.status_code}, implementing retry logic")
+                return await self._handle_server_error(response, user_message, user_context, conversation_history)
             else:
                 print(f"❌ Venice API error: {response.status_code} - {response.text}")
-                return "Sorry, I'm having trouble connecting to the AI service right now. Please try again later."
+                return f"Sorry, I'm experiencing technical difficulties. Please try again later. (Error: {response.status_code})"
                 
+        except requests.exceptions.Timeout:
+            print("⏰ Venice API timeout")
+            return "Sorry, the AI service is taking too long to respond. Please try again."
+        except requests.exceptions.RequestException as e:
+            print(f"🌐 Venice API network error: {e}")
+            return "Sorry, I'm having trouble connecting to the AI service. Please try again later."
         except Exception as e:
-            print(f"Error in Venice direct request: {str(e)}")
-            return "Sorry, I encountered an error while generating a response. Please try again."
+            print(f"❌ Venice API unexpected error: {e}")
+            return "Sorry, something unexpected happened. Please try again later."
+    
+    def _log_venice_headers(self, response):
+        """Log important Venice API response headers for monitoring"""
+        headers = response.headers
+        
+        # Request identification
+        cf_ray = headers.get('CF-RAY')
+        venice_version = headers.get('x-venice-version')
+        
+        # Rate limiting information
+        limit_requests = headers.get('x-ratelimit-limit-requests')
+        remaining_requests = headers.get('x-ratelimit-remaining-requests')
+        reset_requests = headers.get('x-ratelimit-reset-requests')
+        limit_tokens = headers.get('x-ratelimit-limit-tokens')
+        remaining_tokens = headers.get('x-ratelimit-remaining-tokens')
+        reset_tokens = headers.get('x-ratelimit-reset-tokens')
+        
+        # Account balance information
+        balance_usd = headers.get('x-venice-balance-usd')
+        balance_diem = headers.get('x-venice-balance-diem')
+        
+        # Model information
+        model_id = headers.get('x-venice-model-id')
+        deprecation_warning = headers.get('x-venice-model-deprecation-warning')
+        
+        print(f"📊 Venice API Headers:")
+        print(f"   Request ID (CF-RAY): {cf_ray}")
+        print(f"   Venice Version: {venice_version}")
+        
+        if remaining_requests and limit_requests:
+            print(f"   Rate Limit (Requests): {remaining_requests}/{limit_requests}")
+        if remaining_tokens and limit_tokens:
+            print(f"   Rate Limit (Tokens): {remaining_tokens}/{limit_tokens}")
+        
+        if balance_usd:
+            print(f"   USD Balance: ${balance_usd}")
+        if balance_diem:
+            print(f"   DIEM Balance: {balance_diem}")
+            
+        if model_id:
+            print(f"   Model Used: {model_id}")
+            
+        # Warning for model deprecation
+        if deprecation_warning:
+            print(f"⚠️  Model Deprecation Warning: {deprecation_warning}")
+        
+        # Warning for low remaining requests/tokens
+        if remaining_requests and int(remaining_requests) < 10:
+            print(f"⚠️  Low remaining requests: {remaining_requests}")
+        if remaining_tokens and int(remaining_tokens) < 1000:
+            print(f"⚠️  Low remaining tokens: {remaining_tokens}")
+            
+        # Warning for low balance
+        if balance_usd and float(balance_usd) < 1.0:
+            print(f"⚠️  Low USD balance: ${balance_usd}")
+    
+    async def _handle_rate_limit(self, response, user_message, user_context, conversation_history, retry_count=0):
+        """Handle 429 rate limit errors with exponential backoff"""
+        if retry_count >= 3:
+            return "Sorry, the AI service is currently overloaded. Please try again in a few minutes."
+        
+        headers = response.headers
+        reset_requests = headers.get('x-ratelimit-reset-requests')
+        remaining_requests = headers.get('x-ratelimit-remaining-requests')
+        
+        print(f"🚫 Venice rate limit hit. Remaining requests: {remaining_requests}")
+        
+        # Calculate wait time (exponential backoff: 2^retry_count seconds, min 1, max 30)
+        wait_time = min(30, max(1, 2 ** retry_count))
+        
+        if reset_requests:
+            import time
+            reset_time = int(reset_requests)
+            current_time = int(time.time())
+            time_until_reset = max(1, reset_time - current_time)
+            wait_time = min(wait_time, time_until_reset)
+        
+        print(f"⏰ Waiting {wait_time} seconds before retry...")
+        await asyncio.sleep(wait_time)
+        
+        # Retry the request
+        return await self._venice_direct_request(user_message, user_context, conversation_history)
+    
+    async def _handle_server_error(self, response, user_message, user_context, conversation_history, retry_count=0):
+        """Handle 5xx server errors with exponential backoff"""
+        if retry_count >= 2:  # Max 2 retries for server errors
+            return "Sorry, the AI service is temporarily unavailable. Please try again later."
+        
+        print(f"🔄 Venice server error {response.status_code}, retry {retry_count + 1}/2")
+        
+        # Exponential backoff: 2^retry_count seconds
+        wait_time = 2 ** retry_count
+        print(f"⏰ Waiting {wait_time} seconds before retry...")
+        await asyncio.sleep(wait_time)
+        
+        # Retry the request
+        return await self._venice_direct_request(user_message, user_context, conversation_history)
     
     async def _standard_openai_request(self, user_message: str, user_context: str = None, conversation_history: list = None) -> str:
         """Standard OpenAI-compatible request for other providers - NO SYSTEM PROMPT"""
@@ -522,3 +636,90 @@ class OpenRouterAPI:
         except Exception as e:
             print(f"Standard API test error: {str(e)}")
             return False
+    
+    async def get_venice_account_status(self):
+        """Get Venice account balance and rate limit status"""
+        try:
+            if 'venice.ai' not in self.base_url:
+                return {"error": "Not a Venice AI endpoint"}
+            
+            # Make a minimal request to get headers
+            headers = {
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Minimal test data to get rate limit headers
+            data = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": "ping"}],
+                "max_tokens": 1,
+                "temperature": 0
+            }
+            
+            response = requests.post(
+                "https://api.venice.ai/api/v1/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=10
+            )
+            
+            # Extract status information from headers
+            status = {
+                "status_code": response.status_code,
+                "request_id": response.headers.get('CF-RAY', 'N/A'),
+                "venice_version": response.headers.get('x-venice-version', 'N/A'),
+                "model_id": response.headers.get('x-venice-model-id', 'N/A'),
+                
+                # Rate limits
+                "requests_limit": response.headers.get('x-ratelimit-limit-requests'),
+                "requests_remaining": response.headers.get('x-ratelimit-remaining-requests'),
+                "requests_reset": response.headers.get('x-ratelimit-reset-requests'),
+                "tokens_limit": response.headers.get('x-ratelimit-limit-tokens'),
+                "tokens_remaining": response.headers.get('x-ratelimit-remaining-tokens'),
+                "tokens_reset": response.headers.get('x-ratelimit-reset-tokens'),
+                
+                # Balances
+                "balance_usd": response.headers.get('x-venice-balance-usd'),
+                "balance_diem": response.headers.get('x-venice-balance-diem'),
+                
+                # Warnings
+                "model_deprecation_warning": response.headers.get('x-venice-model-deprecation-warning'),
+                "model_deprecation_date": response.headers.get('x-venice-model-deprecation-date')
+            }
+            
+            return status
+            
+        except Exception as e:
+            return {"error": f"Failed to get Venice status: {str(e)}"}
+    
+    def format_venice_status(self, status):
+        """Format Venice status for display"""
+        if "error" in status:
+            return f"❌ Error: {status['error']}"
+        
+        lines = []
+        lines.append(f"🏛️ **Venice API Status**")
+        lines.append(f"📡 Status: {status['status_code']}")
+        lines.append(f"🆔 Request ID: {status['request_id']}")
+        lines.append(f"📦 Venice Version: {status['venice_version']}")
+        lines.append(f"🤖 Model: {status['model_id'] or 'N/A'}")
+        
+        # Rate limits
+        if status['requests_remaining'] and status['requests_limit']:
+            lines.append(f"📊 Requests: {status['requests_remaining']}/{status['requests_limit']}")
+        
+        if status['tokens_remaining'] and status['tokens_limit']:
+            lines.append(f"🎫 Tokens: {status['tokens_remaining']}/{status['tokens_limit']}")
+        
+        # Balances
+        if status['balance_usd']:
+            lines.append(f"💵 USD Balance: ${status['balance_usd']}")
+        if status['balance_diem']:
+            lines.append(f"💎 DIEM Balance: {status['balance_diem']}")
+        
+        # Warnings
+        if status['model_deprecation_warning']:
+            lines.append(f"⚠️ Model Warning: {status['model_deprecation_warning']}")
+        
+        return "\n".join(lines)

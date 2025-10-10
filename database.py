@@ -679,6 +679,24 @@ class Database:
         conn.close()
         return users
 
+    def get_recent_transactions(self, limit=10):
+        """Get recent transactions with user info"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT t.*, u.username 
+            FROM transactions t
+            LEFT JOIN users u ON t.user_id = u.user_id
+            ORDER BY t.created_date DESC 
+            LIMIT ?
+        ''', (limit,))
+        
+        transactions = cursor.fetchall()
+        conn.close()
+        return transactions
+
     def get_users_paginated(self, page, per_page):
         """Get users with pagination"""
         conn = sqlite3.connect(self.db_path)
@@ -952,3 +970,31 @@ class Database:
         
         conn.close()
         return settings
+
+    def execute_query(self, query: str, params: tuple = None):
+        """Execute a raw SQL query and return results"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        try:
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            
+            results = cursor.fetchall()
+            conn.close()
+            return [dict(row) for row in results]
+        except Exception as e:
+            conn.close()
+            logging.error(f"Database query error: {e}")
+            return []
+    
+    def get_total_users(self):
+        """Alias for get_user_count for compatibility"""
+        return self.get_user_count()
+    
+    def get_total_transactions(self):
+        """Alias for get_transaction_count for compatibility"""
+        return self.get_transaction_count()

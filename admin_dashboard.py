@@ -29,6 +29,35 @@ def format_currency(value):
     
     return formatted
 
+# Custom template filter for number formatting
+@app.template_filter('number_format')
+def format_number(value):
+    """Format numbers with thousands separators"""
+    if value is None:
+        return "0"
+    
+    try:
+        return "{:,}".format(int(value))
+    except (ValueError, TypeError):
+        return str(value)
+
+# Custom template filter for date formatting
+@app.template_filter('date_format')
+def format_date(value):
+    """Format datetime strings"""
+    if value is None:
+        return "N/A"
+    
+    try:
+        if isinstance(value, str):
+            # Parse the datetime string
+            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        else:
+            dt = value
+        return dt.strftime('%Y-%m-%d %H:%M')
+    except (ValueError, TypeError, AttributeError):
+        return str(value)
+
 # Simple admin authentication
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD_HASH = generate_password_hash("admin123")  # Change this in production
@@ -527,6 +556,101 @@ def get_openrouter_models():
     """API endpoint to fetch available OpenRouter models"""
     result = fetch_openrouter_models()
     return jsonify(result)
+
+@app.route('/statistics')
+@login_required
+def statistics():
+    """Statistics page with comprehensive analytics"""
+    try:
+        # Get basic stats
+        total_users = db.get_total_users()
+        total_transactions = db.get_total_transactions()
+        payment_stats = db.get_payment_statistics()
+        
+        # Get USD conversion data
+        ton_amount = payment_stats.get('ton', 0)
+        stars_amount = payment_stats.get('stars', 0)
+        usd_data = currency_converter.get_total_usd_value(ton_amount, stars_amount)
+        
+        # Get detailed analytics
+        stats_data = {
+            'overview': {
+                'total_users': total_users,
+                'total_transactions': total_transactions,
+                'total_revenue_usd': usd_data['total_usd'],
+                'ton_revenue_usd': usd_data['ton_usd'],
+                'stars_revenue_usd': usd_data['stars_usd']
+            },
+            'payment_breakdown': {
+                'ton_amount': payment_stats.get('ton', 0),
+                'stars_amount': payment_stats.get('stars', 0),
+                'ton_percentage': 0,
+                'stars_percentage': 0
+            },
+            'recent_activity': {
+                'recent_users': db.get_recent_users(10),
+                'recent_transactions': db.get_recent_transactions(10)
+            },
+            'time_based': {
+                'daily_stats': get_daily_statistics(),
+                'monthly_stats': get_monthly_statistics()
+            },
+            'exchange_rates': {
+                'ton_usd_rate': currency_converter.get_ton_usd_rate(),
+                'stars_usd_rate': 0.013,
+                'last_updated': currency_converter.get_cache_timestamp()
+            }
+        }
+        
+        # Calculate payment method percentages
+        total_payments = payment_stats.get('ton', 0) + payment_stats.get('stars', 0)
+        if total_payments > 0:
+            stats_data['payment_breakdown']['ton_percentage'] = (payment_stats.get('ton', 0) / total_payments) * 100
+            stats_data['payment_breakdown']['stars_percentage'] = (payment_stats.get('stars', 0) / total_payments) * 100
+        
+        return render_template('statistics.html', stats=stats_data, usd_data=usd_data)
+        
+    except Exception as e:
+        flash(f'Error loading statistics: {str(e)}')
+        return redirect(url_for('dashboard'))
+
+def get_daily_statistics():
+    """Get daily statistics for the last 30 days"""
+    try:
+        query = """
+        SELECT 
+            DATE(created_date) as date,
+            COUNT(*) as transaction_count,
+            SUM(CASE WHEN payment_method = 'ton' THEN amount ELSE 0 END) as ton_amount,
+            SUM(CASE WHEN payment_method = 'stars' THEN amount ELSE 0 END) as stars_amount
+        FROM transactions 
+        WHERE created_date >= date('now', '-30 days')
+        GROUP BY DATE(created_date)
+        ORDER BY date DESC
+        """
+        return db.execute_query(query)
+    except Exception as e:
+        logging.error(f"Error getting daily statistics: {e}")
+        return []
+
+def get_monthly_statistics():
+    """Get monthly statistics for the last 12 months"""
+    try:
+        query = """
+        SELECT 
+            strftime('%Y-%m', created_date) as month,
+            COUNT(*) as transaction_count,
+            SUM(CASE WHEN payment_method = 'ton' THEN amount ELSE 0 END) as ton_amount,
+            SUM(CASE WHEN payment_method = 'stars' THEN amount ELSE 0 END) as stars_amount
+        FROM transactions 
+        WHERE created_date >= date('now', '-12 months')
+        GROUP BY strftime('%Y-%m', created_date)
+        ORDER BY month DESC
+        """
+        return db.execute_query(query)
+    except Exception as e:
+        logging.error(f"Error getting monthly statistics: {e}")
+        return []
 
 if __name__ == '__main__':
     # Initialize database
