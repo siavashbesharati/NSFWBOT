@@ -63,6 +63,79 @@
     </div>
 </div>
 
+<!-- Referral Information -->
+{% if referral_stats %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h5><i class="fas fa-users"></i> Referral Information</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Referral Code:</strong> 
+                        {% if referral_stats.referral_code %}
+                            <span class="badge bg-primary">{{ referral_stats.referral_code }}</span>
+                        {% else %}
+                            <span class="text-muted">Not generated</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Total Referrals:</strong> 
+                        <span class="badge bg-success">{{ referral_stats.successful_referrals or 0 }}</span>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Was Referred:</strong> 
+                        {% if was_referred %}
+                            <span class="badge bg-info">Yes</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if referral_stats.referrals %}
+            <hr>
+            <h6><i class="fas fa-list"></i> Recent Referrals</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Date</th>
+                            <th>Rewards</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referral in referral_stats.referrals[:5] %}
+                        <tr>
+                            <td>
+                                {% if referral.username %}
+                                    @{{ referral.username }}
+                                {% else %}
+                                    {{ referral.first_name or 'Unknown' }}
+                                {% endif %}
+                            </td>
+                            <td>{{ referral.completed_date[:10] if referral.completed_date else 'N/A' }}</td>
+                            <td>
+                                <small>
+                                    📝{{ referral.text_reward }} 
+                                    🖼️{{ referral.image_reward }} 
+                                    🎥{{ referral.video_reward }}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- User Actions -->
 <div class="row mb-4">
     <div class="col-12">

@@ -338,6 +338,12 @@ def settings():
         max_requests_per_minute = request.form.get('max_requests_per_minute', '20')
         max_requests_per_hour = request.form.get('max_requests_per_hour', '100')
         
+        # Referral system settings
+        referral_system_enabled = 'referral_system_enabled' in request.form
+        referral_text_reward = request.form.get('referral_text_reward', '3')
+        referral_image_reward = request.form.get('referral_image_reward', '1')
+        referral_video_reward = request.form.get('referral_video_reward', '1')
+        
         # Advanced settings
         max_image_size = request.form.get('max_image_size', '10')
         max_video_size = request.form.get('max_video_size', '50')
@@ -379,6 +385,10 @@ def settings():
             'free_text_messages': free_text_messages,
             'free_image_messages': free_image_messages,
             'free_video_messages': free_video_messages,
+            'referral_system_enabled': str(referral_system_enabled).lower(),
+            'referral_text_reward': referral_text_reward,
+            'referral_image_reward': referral_image_reward,
+            'referral_video_reward': referral_video_reward,
             'max_requests_per_minute': max_requests_per_minute,
             'max_requests_per_hour': max_requests_per_hour,
             'max_image_size': max_image_size,
@@ -527,10 +537,20 @@ def user_detail(user_id):
     user_transactions = db.get_user_transactions(user_id)
     user_usage = db.get_user_usage_history(user_id)
     
+    # Get referral information
+    referral_stats = db.get_user_referrals(user_id)
+    
+    # Check if user was referred by someone
+    was_referred = len(db.execute_query(
+        "SELECT id FROM referrals WHERE referee_id = ?", (user_id,)
+    )) > 0
+    
     return render_template('user_detail.html', 
                          user=user, 
                          transactions=user_transactions, 
-                         usage=user_usage)
+                         usage=user_usage,
+                         referral_stats=referral_stats,
+                         was_referred=was_referred)
 
 @app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required

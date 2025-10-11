@@ -179,32 +179,75 @@
             </div>
         </div>
         
-        <!-- Free Messages Configuration -->
+        <!-- User & Referral Configuration -->
         <div class="col-md-6">
             <div class="glass-card p-4 h-100">
-                <h5><i class="fas fa-gift"></i> Free Messages Configuration</h5>
+                <h5><i class="fas fa-users"></i> User & Referral Configuration</h5>
                 
-                <div class="mb-3">
-                    <label for="free_text_messages" class="form-label">Free Text Messages</label>
-                    <input type="number" class="form-control" id="free_text_messages" name="free_text_messages" 
-                           value="{{ settings.get('free_text_messages', '5') }}" min="0" max="20">
-                    <div class="form-text">Free text messages per new user</div>
+                <div class="row">
+                    <!-- Free Messages Column -->
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-gift"></i> Free Messages</h6>
+                        
+                        <div class="mb-3">
+                            <label for="free_text_messages" class="form-label">Free Text Messages</label>
+                            <input type="number" class="form-control" id="free_text_messages" name="free_text_messages" 
+                                   value="{{ settings.get('free_text_messages', '5') }}" min="0" max="20">
+                            <div class="form-text">Free text messages per new user</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="free_image_messages" class="form-label">Free Image Messages</label>
+                            <input type="number" class="form-control" id="free_image_messages" name="free_image_messages" 
+                                   value="{{ settings.get('free_image_messages', '2') }}" min="0" max="10">
+                            <div class="form-text">Free image generations per new user</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="free_video_messages" class="form-label">Free Video Messages</label>
+                            <input type="number" class="form-control" id="free_video_messages" name="free_video_messages" 
+                                   value="{{ settings.get('free_video_messages', '1') }}" min="0" max="5">
+                            <div class="form-text">Free video generations per new user</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Referral Messages Column -->
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user-friends"></i> Referral Rewards</h6>
+                        
+                        <div class="mb-3">
+                            <label for="referral_text_reward" class="form-label">Text Messages Reward</label>
+                            <input type="number" class="form-control" id="referral_text_reward" name="referral_text_reward" 
+                                   value="{{ settings.get('referral_text_reward', '3') }}" min="0" max="20">
+                            <div class="form-text">Text messages both users get per referral</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="referral_image_reward" class="form-label">Image Messages Reward</label>
+                            <input type="number" class="form-control" id="referral_image_reward" name="referral_image_reward" 
+                                   value="{{ settings.get('referral_image_reward', '1') }}" min="0" max="10">
+                            <div class="form-text">Image messages both users get per referral</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="referral_video_reward" class="form-label">Video Messages Reward</label>
+                            <input type="number" class="form-control" id="referral_video_reward" name="referral_video_reward" 
+                                   value="{{ settings.get('referral_video_reward', '1') }}" min="0" max="5">
+                            <div class="form-text">Video messages both users get per referral</div>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="referral_system_enabled" name="referral_system_enabled" 
+                                   {% if settings.get('referral_system_enabled', 'true') == 'true' %}checked{% endif %}>
+                            <label class="form-check-label" for="referral_system_enabled">
+                                Enable Referral System
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="free_image_messages" class="form-label">Free Image Messages</label>
-                    <input type="number" class="form-control" id="free_image_messages" name="free_image_messages" 
-                           value="{{ settings.get('free_image_messages', '2') }}" min="0" max="10">
-                    <div class="form-text">Free image generations per new user</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="free_video_messages" class="form-label">Free Video Messages</label>
-                    <input type="number" class="form-control" id="free_video_messages" name="free_video_messages" 
-                           value="{{ settings.get('free_video_messages', '1') }}" min="0" max="5">
-                    <div class="form-text">Free video generations per new user</div>
-                </div>
-                
+                <hr class="my-3">
+                <h6><i class="fas fa-tachometer-alt"></i> Rate Limits</h6>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">

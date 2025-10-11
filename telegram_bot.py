@@ -38,6 +38,10 @@ class TelegramBot:
         user = update.effective_user
         chat_id = update.effective_chat.id
         
+        # Check if this is a new user
+        existing_user = self.db.get_user(user.id)
+        is_new_user = existing_user is None
+        
         # Create or update user in database
         self.db.create_user(
             user_id=user.id,
@@ -46,13 +50,37 @@ class TelegramBot:
             last_name=user.last_name
         )
         
+        # Handle referral code if provided and user is new
+        referral_bonus_message = ""
+        if is_new_user and context.args:
+            referral_code = context.args[0].upper()
+            
+            # Check if referral system is enabled
+            settings = self.db.get_all_settings()
+            if settings.get('referral_system_enabled', 'true') == 'true':
+                if self.db.validate_referral_code(referral_code):
+                    # Process the referral
+                    if self.db.process_referral(user.id, referral_code):
+                        text_reward = int(settings.get('referral_text_reward', 3))
+                        image_reward = int(settings.get('referral_image_reward', 1))
+                        video_reward = int(settings.get('referral_video_reward', 1))
+                        
+                        referral_bonus_message = f"""
+🎉 **Referral Bonus Applied!**
+You and your friend both received:
+📝 +{text_reward} text messages
+🖼️ +{image_reward} image generations
+🎥 +{video_reward} video generations
+
+"""
+        
         # Get free message settings from database
         free_settings = self.db.get_free_message_settings()
         
         welcome_message = f"""
 🤖 Welcome to the AI Bot, {user.first_name}!
 
-I can help you with:
+{referral_bonus_message}I can help you with:
 📝 Text conversations
 🖼️ Image analysis
 🎥 Video responses
@@ -66,6 +94,7 @@ After using your free messages, you'll need to purchase a package to continue.
 
 Use /packages to see available packages
 Use /dashboard to check your usage
+Use /referral to get your referral link
 Use /help for more commands
         """
         
@@ -83,7 +112,9 @@ Use /help for more commands
 /dashboard - 📊 Check your usage stats
 /packages - 💎 View available packages
 /balance - 💰 Check your remaining credits
-/reset - 🔄 Reset conversation history
+/referral - 👥 Get your referral link and stats
+/enterreferral - � Enter a referral code manually
+/reset - �🔄 Reset conversation history
 /testapi - 🧪 Test AI API connection (Admin only)
 
 💬 Message Types:
@@ -94,6 +125,10 @@ Use /help for more commands
 💳 Payment Methods:
 - Telegram Stars ⭐
 - TON Coin 💎
+
+👥 Referral System:
+- Share your referral link to earn free messages
+- Both you and your friend get rewards when they join!
 
 📊 All message types are tracked for usage
         """
@@ -309,6 +344,130 @@ Use /packages to buy more credits!
         """
         
         await update.message.reply_text(balance_text)
+    
+    async def referral_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Show user's referral information"""
+        user_id = update.effective_user.id
+        user_data = self.db.get_user(user_id)
+        
+        if not user_data:
+            await update.message.reply_text("Please start the bot first with /start")
+            return
+        
+        # Check if referral system is enabled
+        settings = self.db.get_all_settings()
+        if settings.get('referral_system_enabled', 'true') != 'true':
+            await update.message.reply_text("🚫 Referral system is currently disabled.")
+            return
+        
+        # Get or generate referral code
+        referral_code = self.db.get_user_referral_code(user_id)
+        if not referral_code:
+            referral_code = self.db.generate_referral_code(user_id)
+        
+        # Get referral statistics
+        referral_stats = self.db.get_user_referrals(user_id)
+        
+        # Get reward amounts
+        text_reward = int(settings.get('referral_text_reward', 3))
+        image_reward = int(settings.get('referral_image_reward', 1))
+        video_reward = int(settings.get('referral_video_reward', 1))
+        
+        bot_username = (await context.bot.get_me()).username
+        referral_link = f"https://t.me/{bot_username}?start={referral_code}"
+        
+        referral_text = f"""
+👥 **Referral Program**
+
+🔗 Your referral link:
+`{referral_link}`
+
+📋 Your referral code: `{referral_code}`
+
+🎁 **Rewards (for both you and your friend):**
+📝 Text messages: +{text_reward}
+🖼️ Image generations: +{image_reward}
+🎥 Video generations: +{video_reward}
+
+📊 **Your Statistics:**
+👥 Total referrals: {referral_stats['successful_referrals']}
+
+💡 **How it works:**
+1. Share your referral link with friends
+2. When they join using your link, you both get free messages!
+3. Each friend can only be referred once
+
+Share your link and earn free messages! 🚀
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("📤 Share Referral Link", url=f"https://t.me/share/url?url={referral_link}&text=Join this amazing AI bot!")],
+            [InlineKeyboardButton("📊 My Referrals", callback_data="show_referrals")]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(referral_text, reply_markup=reply_markup, parse_mode='Markdown')
+    
+    async def enter_referral_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Allow users to enter a referral code manually"""
+        user_id = update.effective_user.id
+        user_data = self.db.get_user(user_id)
+        
+        if not user_data:
+            await update.message.reply_text("Please start the bot first with /start")
+            return
+        
+        # Check if referral system is enabled
+        settings = self.db.get_all_settings()
+        if settings.get('referral_system_enabled', 'true') != 'true':
+            await update.message.reply_text("🚫 Referral system is currently disabled.")
+            return
+        
+        if context.args:
+            referral_code = context.args[0].upper()
+            
+            # Check if user was already referred
+            existing_referral = self.db.execute_query(
+                "SELECT id FROM referrals WHERE referee_id = ?", (user_id,)
+            )
+            
+            if existing_referral:
+                await update.message.reply_text("❌ You have already been referred by someone else.")
+                return
+            
+            # Validate and process referral
+            if self.db.validate_referral_code(referral_code):
+                if self.db.process_referral(user_id, referral_code):
+                    text_reward = int(settings.get('referral_text_reward', 3))
+                    image_reward = int(settings.get('referral_image_reward', 1))
+                    video_reward = int(settings.get('referral_video_reward', 1))
+                    
+                    success_message = f"""
+✅ **Referral Applied Successfully!**
+
+🎉 You and your friend both received:
+📝 +{text_reward} text messages
+🖼️ +{image_reward} image generations
+🎥 +{video_reward} video generations
+
+Enjoy your free messages!
+                    """
+                    await update.message.reply_text(success_message, parse_mode='Markdown')
+                else:
+                    await update.message.reply_text("❌ Failed to apply referral. Please try again later.")
+            else:
+                await update.message.reply_text("❌ Invalid referral code. Please check and try again.")
+        else:
+            await update.message.reply_text("""
+📝 **Enter Referral Code**
+
+To use a referral code, send:
+`/enterreferral YOUR_CODE`
+
+Example: `/enterreferral ABC12345`
+
+💡 You can only use a referral code once, and only if you haven't been referred before.
+            """, parse_mode='Markdown')
     
     async def handle_text_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages"""
@@ -550,6 +709,34 @@ Use /packages to buy more credits!
         elif data == "refresh_dashboard":
             # Refresh dashboard
             await self.dashboard_command(update, context)
+        
+        elif data == "show_referrals":
+            # Show user's referral details
+            user_id = query.from_user.id
+            referral_stats = self.db.get_user_referrals(user_id)
+            
+            if referral_stats['successful_referrals'] == 0:
+                await query.edit_message_text("👥 **Your Referrals**\n\nYou haven't referred anyone yet. Share your referral link to start earning rewards!", parse_mode='Markdown')
+            else:
+                referrals_text = f"👥 **Your Referrals** ({referral_stats['successful_referrals']} total)\n\n"
+                
+                for i, referral in enumerate(referral_stats['referrals'][:10], 1):  # Show last 10
+                    username = referral.get('username', 'Unknown')
+                    first_name = referral.get('first_name', 'User')
+                    date = referral.get('completed_date', 'Unknown')[:10] if referral.get('completed_date') else 'Unknown'
+                    
+                    referrals_text += f"{i}. @{username or first_name} - {date}\n"
+                
+                if len(referral_stats['referrals']) > 10:
+                    referrals_text += f"\n... and {len(referral_stats['referrals']) - 10} more"
+                
+                keyboard = [[InlineKeyboardButton("🔙 Back to Referrals", callback_data="back_to_referral")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.edit_message_text(referrals_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+        elif data == "back_to_referral":
+            # Go back to referral main screen
+            await self.referral_command(update, context)
     
     async def handle_stars_purchase(self, query, package_id: int):
         """Handle Telegram Stars purchase"""
@@ -698,6 +885,8 @@ Use /packages to buy more credits!
             self.app.add_handler(CommandHandler("packages", self.packages_command))
             self.app.add_handler(CommandHandler("dashboard", self.dashboard_command))
             self.app.add_handler(CommandHandler("balance", self.balance_command))
+            self.app.add_handler(CommandHandler("referral", self.referral_command))
+            self.app.add_handler(CommandHandler("enterreferral", self.enter_referral_command))
             
             # Message handlers
             self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))

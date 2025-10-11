@@ -198,6 +198,37 @@ class Database:
             )
         ''')
         
+        # Referrals table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS referrals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                referrer_id INTEGER NOT NULL,
+                referee_id INTEGER NOT NULL,
+                referral_code TEXT,
+                status TEXT DEFAULT 'pending', -- 'pending', 'completed', 'expired'
+                text_reward INTEGER DEFAULT 0,
+                image_reward INTEGER DEFAULT 0,
+                video_reward INTEGER DEFAULT 0,
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_date TIMESTAMP,
+                FOREIGN KEY (referrer_id) REFERENCES users (user_id),
+                FOREIGN KEY (referee_id) REFERENCES users (user_id),
+                UNIQUE(referee_id) -- Each user can only be referred once
+            )
+        ''')
+        
+        # User referral codes table (for tracking unique referral codes)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_referral_codes (
+                user_id INTEGER PRIMARY KEY,
+                referral_code TEXT UNIQUE NOT NULL,
+                total_referrals INTEGER DEFAULT 0,
+                successful_referrals INTEGER DEFAULT 0,
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (user_id)
+            )
+        ''')
+        
         # Bot statistics table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS bot_stats (
@@ -255,7 +286,12 @@ class Database:
             ("payment_ton_enabled", "true"),
             # Token pricing settings (Venice AI default pricing)
             ("input_token_price_per_1m", "0.50"),    # $0.50 per 1M input tokens
-            ("output_token_price_per_1m", "1.50")    # $1.50 per 1M output tokens
+            ("output_token_price_per_1m", "1.50"),   # $1.50 per 1M output tokens
+            # Referral system settings
+            ("referral_system_enabled", "true"),
+            ("referral_text_reward", "3"),
+            ("referral_image_reward", "1"),
+            ("referral_video_reward", "1")
         ]
         
         for key, value in default_settings:
@@ -1164,3 +1200,165 @@ class Database:
     def get_total_transactions(self):
         """Alias for get_transaction_count for compatibility"""
         return self.get_transaction_count()
+    
+    # Referral System Methods
+    
+    def generate_referral_code(self, user_id: int) -> str:
+        """Generate a unique referral code for a user"""
+        import random
+        import string
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if user already has a referral code
+        cursor.execute('SELECT referral_code FROM user_referral_codes WHERE user_id = ?', (user_id,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            conn.close()
+            return existing[0]
+        
+        # Generate a unique code
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            cursor.execute('SELECT user_id FROM user_referral_codes WHERE referral_code = ?', (code,))
+            if not cursor.fetchone():
+                break
+        
+        # Insert the new code
+        cursor.execute('''
+            INSERT INTO user_referral_codes (user_id, referral_code)
+            VALUES (?, ?)
+        ''', (user_id, code))
+        
+        conn.commit()
+        conn.close()
+        return code
+    
+    def get_user_referral_code(self, user_id: int) -> Optional[str]:
+        """Get user's referral code"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT referral_code FROM user_referral_codes WHERE user_id = ?', (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        return result[0] if result else None
+    
+    def process_referral(self, referee_id: int, referral_code: str) -> bool:
+        """Process a referral when a new user joins with a referral code"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Find the referrer by code
+            cursor.execute('SELECT user_id FROM user_referral_codes WHERE referral_code = ?', (referral_code,))
+            referrer_result = cursor.fetchone()
+            
+            if not referrer_result:
+                conn.close()
+                return False
+            
+            referrer_id = referrer_result[0]
+            
+            # Check if this user was already referred
+            cursor.execute('SELECT id FROM referrals WHERE referee_id = ?', (referee_id,))
+            if cursor.fetchone():
+                conn.close()
+                return False  # Already referred
+            
+            # Get referral rewards from settings
+            settings = self.get_all_settings()
+            text_reward = int(settings.get('referral_text_reward', 3))
+            image_reward = int(settings.get('referral_image_reward', 1))
+            video_reward = int(settings.get('referral_video_reward', 1))
+            
+            # Create referral record
+            cursor.execute('''
+                INSERT INTO referrals (referrer_id, referee_id, referral_code, status, 
+                                     text_reward, image_reward, video_reward, completed_date)
+                VALUES (?, ?, ?, 'completed', ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (referrer_id, referee_id, referral_code, text_reward, image_reward, video_reward))
+            
+            # Add credits to both users
+            # Referrer gets the rewards
+            cursor.execute('''
+                UPDATE users 
+                SET text_messages_left = text_messages_left + ?,
+                    image_messages_left = image_messages_left + ?,
+                    video_messages_left = video_messages_left + ?
+                WHERE user_id = ?
+            ''', (text_reward, image_reward, video_reward, referrer_id))
+            
+            # Referee gets the rewards too
+            cursor.execute('''
+                UPDATE users 
+                SET text_messages_left = text_messages_left + ?,
+                    image_messages_left = image_messages_left + ?,
+                    video_messages_left = video_messages_left + ?
+                WHERE user_id = ?
+            ''', (text_reward, image_reward, video_reward, referee_id))
+            
+            # Update referrer's statistics
+            cursor.execute('''
+                UPDATE user_referral_codes 
+                SET total_referrals = total_referrals + 1,
+                    successful_referrals = successful_referrals + 1
+                WHERE user_id = ?
+            ''', (referrer_id,))
+            
+            conn.commit()
+            conn.close()
+            return True
+            
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            logging.error(f"Error processing referral: {e}")
+            return False
+    
+    def get_user_referrals(self, user_id: int) -> Dict:
+        """Get referral statistics for a user"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get referral code info
+        cursor.execute('''
+            SELECT referral_code, total_referrals, successful_referrals 
+            FROM user_referral_codes WHERE user_id = ?
+        ''', (user_id,))
+        code_info = cursor.fetchone()
+        
+        # Get successful referrals
+        cursor.execute('''
+            SELECT r.*, u.username, u.first_name 
+            FROM referrals r
+            LEFT JOIN users u ON r.referee_id = u.user_id
+            WHERE r.referrer_id = ? AND r.status = 'completed'
+            ORDER BY r.completed_date DESC
+        ''', (user_id,))
+        referrals = cursor.fetchall()
+        
+        conn.close()
+        
+        result = {
+            'referral_code': code_info[0] if code_info else None,
+            'total_referrals': code_info[1] if code_info else 0,
+            'successful_referrals': code_info[2] if code_info else 0,
+            'referrals': [dict(zip([col[0] for col in cursor.description], row)) for row in referrals] if referrals else []
+        }
+        
+        return result
+    
+    def validate_referral_code(self, referral_code: str) -> bool:
+        """Check if a referral code is valid"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT user_id FROM user_referral_codes WHERE referral_code = ?', (referral_code,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        return result is not None
