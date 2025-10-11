@@ -81,6 +81,12 @@ class Database:
         except sqlite3.OperationalError:
             pass  # Column already exists
         
+        # Add language preference column
+        try:
+            cursor.execute('ALTER TABLE users ADD COLUMN language TEXT DEFAULT "en"')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
         # Packages table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS packages (
@@ -1353,6 +1359,39 @@ class Database:
         }
         
         return result
+    
+    def set_user_language(self, user_id: int, language: str) -> bool:
+        """Set user's preferred language"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                UPDATE users SET language = ? WHERE user_id = ?
+            ''', (language, user_id))
+            
+            conn.commit()
+            success = cursor.rowcount > 0
+            conn.close()
+            return success
+        except Exception as e:
+            print(f"Error setting user language: {e}")
+            return False
+    
+    def get_user_language(self, user_id: int) -> str:
+        """Get user's preferred language, default to English"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT language FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            conn.close()
+            
+            return result[0] if result and result[0] else 'en'
+        except Exception as e:
+            print(f"Error getting user language: {e}")
+            return 'en'  # Default to English
     
     def validate_referral_code(self, referral_code: str) -> bool:
         """Check if a referral code is valid"""
