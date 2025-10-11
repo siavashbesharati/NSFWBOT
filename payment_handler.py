@@ -149,6 +149,8 @@ class PaymentHandler:
     async def verify_ton_payment(self, transaction_id: int) -> bool:
         """Verify TON payment by checking blockchain"""
         try:
+            logging.info(f"🔍 Starting TON payment verification for transaction {transaction_id}")
+            
             # Get transaction details
             conn = self.db.get_connection()
             cursor = conn.cursor()
@@ -160,23 +162,34 @@ class PaymentHandler:
             
             result = cursor.fetchone()
             if not result:
+                logging.warning(f"❌ Transaction {transaction_id} not found or not pending")
                 conn.close()
                 return False
             
             user_id, package_id, expected_amount, created_date = result
             conn.close()
             
+            logging.info(f"📋 Transaction details: user_id={user_id}, package_id={package_id}, amount={expected_amount} TON, created={created_date}")
+            
             # Verify payment using TON API
             payment_comment = f"Payment_{transaction_id}_{user_id}"
             ton_wallet_address = self.get_ton_wallet_address()
             
+            logging.info(f"🔍 Checking blockchain for payment:")
+            logging.info(f"   - Wallet: {ton_wallet_address}")
+            logging.info(f"   - Expected amount: {expected_amount} TON")
+            logging.info(f"   - Expected comment: {payment_comment}")
+            logging.info(f"   - Network: {'TESTNET' if self.ton_testnet else 'MAINNET'}")
+            
             if await self._check_ton_transaction(ton_wallet_address, expected_amount, payment_comment, created_date):
                 # Payment verified, complete transaction
+                logging.info(f"✅ Payment verified! Completing transaction {transaction_id}")
                 self.db.complete_transaction(transaction_id, f"ton_verified_{int(time.time())}")
                 
                 # Add credits to user
                 package = self.db.get_package(package_id)
                 if package:
+                    logging.info(f"💰 Adding credits to user {user_id}: {package['text_count']} text, {package['image_count']} image, {package['video_count']} video")
                     self.db.add_message_credits(
                         user_id,
                         package['text_count'],
@@ -184,13 +197,15 @@ class PaymentHandler:
                         package['video_count']
                     )
                 
-                logging.info(f"TON payment verified and completed for transaction {transaction_id}")
+                logging.info(f"🎉 TON payment verified and completed for transaction {transaction_id}")
                 return True
+            else:
+                logging.warning(f"❌ Payment not found on blockchain for transaction {transaction_id}")
             
             return False
             
         except Exception as e:
-            logging.error(f"Error verifying TON payment: {str(e)}")
+            logging.error(f"💥 Error verifying TON payment {transaction_id}: {str(e)}")
             return False
     
     async def _check_ton_transaction(self, wallet_address: str, expected_amount: float, expected_comment: str, since_timestamp: str) -> bool:
@@ -201,68 +216,109 @@ class PaymentHandler:
             since_dt = datetime.datetime.fromisoformat(since_timestamp.replace('Z', '+00:00'))
             since_unix = int(since_dt.timestamp())
             
+            logging.info(f"🌐 Checking TON API for transactions since {since_timestamp} (unix: {since_unix})")
+            
             # Build API request URL
             url = f"{self.ton_api_endpoint}getTransactions"
             params = {
                 'address': wallet_address,
                 'limit': 100,  # Check last 100 transactions
                 'to_lt': 0,
-                'archival': True
+                'archival': 'true'  # String instead of boolean
             }
             
-            if self.ton_api_key:
+            if self.ton_api_key and not self.ton_testnet:
+                # Only use API key for mainnet (testnet API key may cause "Network not allowed")
                 params['api_key'] = self.ton_api_key
+                logging.info(f"🔑 Using API key for TON requests (mainnet)")
+            else:
+                if self.ton_testnet:
+                    logging.info(f"⚠️ Not using API key for testnet (may cause network restrictions)")
+                else:
+                    logging.info(f"⚠️ No API key configured - using default limits")
+            
+            logging.info(f"📡 API Request: {url}")
+            logging.info(f"📡 Parameters: {params}")
             
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
+                    logging.info(f"📡 API Response Status: {response.status}")
+                    
                     if response.status != 200:
-                        logging.error(f"TON API error: {response.status}")
+                        logging.error(f"❌ TON API error: {response.status}")
+                        response_text = await response.text()
+                        logging.error(f"❌ Response body: {response_text}")
                         return False
                     
                     data = await response.json()
+                    logging.info(f"📡 API Response OK: {data.get('ok', False)}")
                     
                     if not data.get('ok'):
-                        logging.error(f"TON API response not ok: {data}")
+                        logging.error(f"❌ TON API response not ok: {data}")
                         return False
                     
                     transactions = data.get('result', [])
+                    logging.info(f"📊 Found {len(transactions)} transactions to check")
                     
                     # Check each transaction
-                    for tx in transactions:
+                    for i, tx in enumerate(transactions):
+                        tx_time = tx.get('utime', 0)
+                        logging.info(f"🔍 Checking transaction {i+1}/{len(transactions)} (time: {tx_time}, since: {since_unix})")
+                        
                         # Skip if transaction is older than our payment
-                        if tx.get('utime', 0) < since_unix:
+                        if tx_time < since_unix:
+                            logging.info(f"⏭️ Skipping old transaction: {tx_time} < {since_unix}")
                             continue
+                        
+                        logging.info(f"⏰ Transaction is recent enough: {tx_time} >= {since_unix}")
                         
                         # Check incoming messages
                         in_msg = tx.get('in_msg', {})
                         if not in_msg:
+                            logging.info(f"⏭️ No incoming message in this transaction")
                             continue
+                        
+                        logging.info(f"📨 Found incoming message in transaction")
                         
                         # Check amount (convert from nanoTON)
                         value = int(in_msg.get('value', 0))
                         amount_ton = value / 1000000000
                         
+                        logging.info(f"💰 Transaction amount: {value} nanoTON = {amount_ton} TON")
+                        logging.info(f"💰 Expected amount: {expected_amount} TON")
+                        logging.info(f"💰 Difference: {abs(amount_ton - expected_amount)} (tolerance: 0.001)")
+                        
                         # Check if amount matches (with small tolerance for fees)
                         if abs(amount_ton - expected_amount) < 0.001:
+                            logging.info(f"✅ Amount matches! {amount_ton} ≈ {expected_amount}")
+                            
                             # Check comment/message
                             message = in_msg.get('message', '')
+                            logging.info(f"💬 Transaction message: '{message}'")
+                            logging.info(f"💬 Expected comment: '{expected_comment}'")
+                            
                             if expected_comment in message:
-                                logging.info(f"Found matching TON transaction: {amount_ton} TON with comment '{message}'")
+                                logging.info(f"🎉 PAYMENT FOUND! Amount: {amount_ton} TON, Comment: '{message}'")
                                 return True
+                            else:
+                                logging.warning(f"❌ Comment doesn't match: '{message}' does not contain '{expected_comment}'")
+                        else:
+                            logging.info(f"❌ Amount doesn't match: {amount_ton} vs {expected_amount} (diff: {abs(amount_ton - expected_amount)})")
             
+            logging.warning(f"❌ No matching transaction found after checking {len(transactions)} transactions")
             return False
             
         except Exception as e:
-            logging.error(f"Error checking TON transaction: {str(e)}")
-            return False
-            
-        except Exception as e:
-            logging.error(f"Error verifying TON payment: {str(e)}")
+            logging.error(f"💥 Error checking TON transaction: {str(e)}")
+            import traceback
+            logging.error(f"💥 Full traceback: {traceback.format_exc()}")
             return False
     
     async def check_pending_payments(self):
         """Background task to check pending payments"""
         try:
+            logging.info(f"🔄 Starting background check for pending payments")
+            
             conn = self.db.get_connection()
             cursor = conn.cursor()
             
@@ -277,16 +333,23 @@ class PaymentHandler:
             pending_transactions = cursor.fetchall()
             conn.close()
             
+            logging.info(f"📋 Found {len(pending_transactions)} pending TON transactions to check")
+            
             for transaction in pending_transactions:
                 transaction_id, user_id, package_id, amount = transaction
+                logging.info(f"🔍 Checking pending transaction {transaction_id} for user {user_id} ({amount} TON)")
                 
                 if await self.verify_ton_payment(transaction_id):
-                    logging.info(f"TON payment verified for transaction {transaction_id}")
+                    logging.info(f"✅ TON payment verified for transaction {transaction_id}")
                 else:
-                    logging.info(f"TON payment still pending for transaction {transaction_id}")
+                    logging.info(f"⏳ TON payment still pending for transaction {transaction_id}")
+            
+            logging.info(f"🔄 Background payment check completed")
             
         except Exception as e:
-            logging.error(f"Error checking pending payments: {str(e)}")
+            logging.error(f"💥 Error checking pending payments: {str(e)}")
+            import traceback
+            logging.error(f"💥 Full traceback: {traceback.format_exc()}")
     
     def get_payment_status(self, transaction_id: int) -> Optional[Dict[str, Any]]:
         """Get payment status"""
