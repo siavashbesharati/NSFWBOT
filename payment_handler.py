@@ -3,6 +3,7 @@ import logging
 from typing import Optional, Dict, Any
 import json
 import aiohttp
+import time
 from config import Config
 from database import Database
 
@@ -10,6 +11,11 @@ class PaymentHandler:
     def __init__(self, db: Database):
         self.db = db
         self.simulation_mode = self.db.get_setting('simulation_mode', 'true').lower() == 'true'
+        self.ton_testnet = self.db.get_setting('ton_testnet_mode', 'true').lower() == 'true'
+        
+        # TON API endpoints
+        self.ton_api_endpoint = "https://testnet.toncenter.com/api/v2/" if self.ton_testnet else "https://toncenter.com/api/v2/"
+        self.ton_api_key = self.db.get_setting('ton_api_key', '')  # Optional API key for higher limits
         
     async def create_stars_payment(self, user_id: int, package_id: int, amount: int) -> Dict[str, Any]:
         """Create Telegram Stars payment"""
@@ -126,12 +132,26 @@ class PaymentHandler:
             ton_amount = int(amount * 1000000000)  # Convert to nanoTON
             ton_wallet_address = self.db.get_setting('ton_wallet_address', '')
             
-            payment_url = (
-                f"https://app.tonkeeper.com/transfer/"
-                f"{ton_wallet_address}?"
-                f"amount={ton_amount}&"
-                f"text={payment_comment}"
-            )
+            # Choose appropriate wallet app based on network
+            if self.ton_testnet:
+                # For testnet, use Tonkeeper with testnet parameter
+                payment_url = (
+                    f"https://app.tonkeeper.com/transfer/"
+                    f"{ton_wallet_address}?"
+                    f"amount={ton_amount}&"
+                    f"text={payment_comment}&"
+                    f"testnet=true"
+                )
+                network_info = "🧪 TESTNET"
+            else:
+                # For mainnet
+                payment_url = (
+                    f"https://app.tonkeeper.com/transfer/"
+                    f"{ton_wallet_address}?"
+                    f"amount={ton_amount}&"
+                    f"text={payment_comment}"
+                )
+                network_info = "🌐 MAINNET"
             
             return {
                 "success": True,
@@ -140,7 +160,8 @@ class PaymentHandler:
                 "ton_address": ton_wallet_address,
                 "amount": amount,
                 "comment": payment_comment,
-                "message": f"💎 TON payment created for {amount} TON"
+                "network": network_info,
+                "message": f"💎 TON payment created for {amount} TON ({network_info})"
             }
             
         except Exception as e:
@@ -192,35 +213,32 @@ class PaymentHandler:
                 # In simulation mode, always verify successfully
                 return True
             
-            # In a real implementation, you would:
-            # 1. Check TON blockchain for incoming transactions
-            # 2. Verify the amount and comment match
-            # 3. Confirm the transaction is confirmed
-            
-            # For now, we'll implement a basic check
-            # You would integrate with TON API here
-            
-            # Placeholder for real TON verification
-            payment_comment = f"Payment_{transaction_id}"
-            
-            # This is where you'd call TON API to check for transactions
-            # Example: Check last transactions to your wallet
-            # and look for one with the correct comment and amount
-            
-            # For demo purposes, we'll mark as completed
-            self.db.complete_transaction(transaction_id, f"ton_verified_{transaction_id}")
-            
-            # Add credits to user
+            # Get transaction details
             conn = self.db.get_connection()
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT user_id, package_id FROM transactions WHERE id = ?
+                SELECT user_id, package_id, amount, created_date FROM transactions 
+                WHERE id = ? AND status = 'pending'
             ''', (transaction_id,))
             
             result = cursor.fetchone()
-            if result:
-                user_id, package_id = result
+            if not result:
+                conn.close()
+                return False
+            
+            user_id, package_id, expected_amount, created_date = result
+            conn.close()
+            
+            # Verify payment using TON API
+            payment_comment = f"Payment_{transaction_id}"
+            ton_wallet_address = self.db.get_setting('ton_wallet_address', '')
+            
+            if await self._check_ton_transaction(ton_wallet_address, expected_amount, payment_comment, created_date):
+                # Payment verified, complete transaction
+                self.db.complete_transaction(transaction_id, f"ton_verified_{int(time.time())}")
+                
+                # Add credits to user
                 package = self.db.get_package(package_id)
                 if package:
                     self.db.add_message_credits(
@@ -229,9 +247,78 @@ class PaymentHandler:
                         package['image_count'],
                         package['video_count']
                     )
+                
+                logging.info(f"TON payment verified and completed for transaction {transaction_id}")
+                return True
             
-            conn.close()
-            return True
+            return False
+            
+        except Exception as e:
+            logging.error(f"Error verifying TON payment: {str(e)}")
+            return False
+    
+    async def _check_ton_transaction(self, wallet_address: str, expected_amount: float, expected_comment: str, since_timestamp: str) -> bool:
+        """Check TON blockchain for specific transaction"""
+        try:
+            # Convert timestamp to Unix time for API
+            import datetime
+            since_dt = datetime.datetime.fromisoformat(since_timestamp.replace('Z', '+00:00'))
+            since_unix = int(since_dt.timestamp())
+            
+            # Build API request URL
+            url = f"{self.ton_api_endpoint}getTransactions"
+            params = {
+                'address': wallet_address,
+                'limit': 100,  # Check last 100 transactions
+                'to_lt': 0,
+                'archival': True
+            }
+            
+            if self.ton_api_key:
+                params['api_key'] = self.ton_api_key
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as response:
+                    if response.status != 200:
+                        logging.error(f"TON API error: {response.status}")
+                        return False
+                    
+                    data = await response.json()
+                    
+                    if not data.get('ok'):
+                        logging.error(f"TON API response not ok: {data}")
+                        return False
+                    
+                    transactions = data.get('result', [])
+                    
+                    # Check each transaction
+                    for tx in transactions:
+                        # Skip if transaction is older than our payment
+                        if tx.get('utime', 0) < since_unix:
+                            continue
+                        
+                        # Check incoming messages
+                        in_msg = tx.get('in_msg', {})
+                        if not in_msg:
+                            continue
+                        
+                        # Check amount (convert from nanoTON)
+                        value = int(in_msg.get('value', 0))
+                        amount_ton = value / 1000000000
+                        
+                        # Check if amount matches (with small tolerance for fees)
+                        if abs(amount_ton - expected_amount) < 0.001:
+                            # Check comment/message
+                            message = in_msg.get('message', '')
+                            if expected_comment in message:
+                                logging.info(f"Found matching TON transaction: {amount_ton} TON with comment '{message}'")
+                                return True
+            
+            return False
+            
+        except Exception as e:
+            logging.error(f"Error checking TON transaction: {str(e)}")
+            return False
             
         except Exception as e:
             logging.error(f"Error verifying TON payment: {str(e)}")

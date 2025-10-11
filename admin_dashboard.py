@@ -330,6 +330,8 @@ def settings():
         # Payment method settings
         telegram_stars_enabled = 'telegram_stars_enabled' in request.form
         ton_enabled = 'ton_enabled' in request.form
+        ton_testnet_mode = 'ton_testnet_mode' in request.form
+        ton_api_key = request.form.get('ton_api_key', '')
         
         # Free messages and rate limiting settings
         free_text_messages = request.form.get('free_text_messages', '5')
@@ -382,6 +384,8 @@ def settings():
             'bot_active': str(bot_active).lower(),
             'telegram_stars_enabled': str(telegram_stars_enabled).lower(),
             'ton_enabled': str(ton_enabled).lower(),
+            'ton_testnet_mode': str(ton_testnet_mode).lower(),
+            'ton_api_key': ton_api_key,
             'free_text_messages': free_text_messages,
             'free_image_messages': free_image_messages,
             'free_video_messages': free_video_messages,

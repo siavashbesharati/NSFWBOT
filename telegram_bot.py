@@ -794,7 +794,7 @@ Example: `/enterreferral ABC12345`
                 await query.edit_message_text(result['message'])
             else:
                 message = f"""
-💎 TON Payment Instructions
+💎 TON Payment Instructions {result.get('network', '')}
 
 📦 Package: {package['name']}
 💰 Amount: {amount} TON
@@ -805,6 +805,8 @@ Example: `/enterreferral ABC12345`
 [Open in Tonkeeper]({result['payment_url']})
 
 ⏰ Your payment will be verified automatically within a few minutes.
+
+{result.get('network', '🌐 MAINNET') if '🧪' not in result.get('network', '') else '🧪 Note: This is TESTNET - you will receive test TON only!'}
                 """
                 
                 keyboard = [[

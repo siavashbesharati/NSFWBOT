@@ -291,7 +291,10 @@ class Database:
             ("referral_system_enabled", "true"),
             ("referral_text_reward", "3"),
             ("referral_image_reward", "1"),
-            ("referral_video_reward", "1")
+            ("referral_video_reward", "1"),
+            # TON payment settings
+            ("ton_testnet_mode", "true"),  # Start with testnet for safety
+            ("ton_api_key", "")  # Optional API key
         ]
         
         for key, value in default_settings:

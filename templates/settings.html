@@ -175,6 +175,22 @@
                             <i class="fas fa-coins text-primary"></i> Enable TON Payments
                         </label>
                     </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ton_testnet_mode" name="ton_testnet_mode" 
+                               {% if settings.get('ton_testnet_mode', 'true') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="ton_testnet_mode">
+                            <i class="fas fa-flask text-info"></i> TON Testnet Mode (Sandbox)
+                        </label>
+                        <div class="form-text">Use TON testnet for safe testing with fake tokens</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="ton_api_key" class="form-label">TON API Key (Optional)</label>
+                    <input type="password" class="form-control" id="ton_api_key" name="ton_api_key" 
+                           value="{{ settings.get('ton_api_key', '') }}" 
+                           placeholder="Optional API key for higher rate limits">
+                    <div class="form-text">Get from @tonapibot or toncenter.com for higher API limits</div>
                 </div>
             </div>
         </div>
