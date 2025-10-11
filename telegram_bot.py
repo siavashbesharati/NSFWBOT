@@ -1001,14 +1001,10 @@ Example: `/enterreferral ABC12345`
         """Set up the bot's hamburger menu with commands"""
         try:
             commands = [
-                BotCommand("start", "🚀 Start the bot and get welcome message"),
-                BotCommand("help", "ℹ️ Show available commands and help"),
-                BotCommand("dashboard", "📊 View your usage dashboard"),
-                BotCommand("packages", "💎 Browse message packages"),
-                BotCommand("balance", "💰 Check your message balance"),
-                BotCommand("reset", "🔄 Reset conversation history"),
-                BotCommand("testapi", "🧪 Test AI connection (admin only)"),
-                BotCommand("venicestatus", "📊 Check Venice API status (admin only)")
+                BotCommand("help", "Help"),
+                BotCommand("dashboard", "Dashboard"),
+                BotCommand("packages", "Packages"),
+                BotCommand("reset", "Reset")
             ]
             
             await application.bot.set_my_commands(commands)
