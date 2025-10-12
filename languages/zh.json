@@ -103,7 +103,9 @@
         "your_link": "📎 您的推荐链接：\n{link}",
         "stats": "📊 您的推荐统计：\n👥 总推荐数：{count}\n💰 获得奖励：{rewards}",
         "how_it_works": "📋 工作原理：\n1. 与朋友分享您的推荐链接\n2. 当他们使用您的链接加入时，你们都会获得奖励\n3. 奖励会自动添加到您的账户",
-        "rewards_info": "🎁 每次推荐奖励：\n📝 +{text} 条文本消息\n🖼️ +{image} 次图片生成\n🎥 +{video} 次视频生成"
+        "rewards_info": "🎁 每次推荐奖励：\n📝 +{text} 条文本消息\n🖼️ +{image} 次图片生成\n🎥 +{video} 次视频生成",
+        "share_referral_link": "📤 分享推荐链接",
+        "my_referrals": "📊 我的推荐"
     },
     "payment": {
         "select_method": "💳 选择支付方式：",

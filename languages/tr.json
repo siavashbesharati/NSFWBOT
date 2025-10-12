@@ -103,7 +103,9 @@
         "your_link": "📎 Referans bağlantınız:\n{link}",
         "stats": "📊 Referans istatistikleriniz:\n👥 Toplam referanslar: {count}\n💰 Kazanılan ödüller: {rewards}",
         "how_it_works": "📋 Nasıl çalışır:\n1. Referans bağlantınızı arkadaşlarınızla paylaşın\n2. Bağlantınızı kullanarak katıldıklarında, ikiniz de ödül alırsınız\n3. Ödüller otomatik olarak hesabınıza eklenir",
-        "rewards_info": "🎁 Referans başına ödüller:\n📝 +{text} metin mesajı\n🖼️ +{image} görsel üretimi\n🎥 +{video} video üretimi"
+        "rewards_info": "🎁 Referans başına ödüller:\n📝 +{text} metin mesajı\n🖼️ +{image} görsel üretimi\n🎥 +{video} video üretimi",
+        "share_referral_link": "📤 Referans Bağlantısını Paylaş",
+        "my_referrals": "📊 Referanslarım"
     },
     "payment": {
         "select_method": "💳 Ödeme yöntemini seçin:",

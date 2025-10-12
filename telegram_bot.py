@@ -308,8 +308,8 @@ class TelegramBot:
         
         # Create keyboard with gift options
         keyboard = [
-            [InlineKeyboardButton("📤 Share Referral Link", url=f"https://t.me/share/url?url={referral_link}&text=Join this amazing AI bot!")],
-            [InlineKeyboardButton("📊 My Referrals", callback_data="show_referrals")],
+            [InlineKeyboardButton(get_text('referral.share_referral_link', user_lang), url=f"https://t.me/share/url?url={referral_link}&text=Join this amazing AI bot!")],
+            [InlineKeyboardButton(get_text('referral.my_referrals', user_lang), callback_data="show_referrals")],
             [InlineKeyboardButton(get_text('commands.enterreferral', user_lang), callback_data="enter_referral_from_gift")],
             [InlineKeyboardButton(get_text('glass_menu.back_to_menu', user_lang), callback_data="back_to_menu")]
         ]

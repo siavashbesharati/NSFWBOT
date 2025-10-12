@@ -105,7 +105,9 @@
         "your_link": "📎 Your referral link:\n{link}",
         "stats": "📊 Your referral stats:\n👥 Total referrals: {count}\n💰 Earned rewards: {rewards}",
         "how_it_works": "📋 How it works:\n1. Share your referral link with friends\n2. When they join using your link, both of you get rewards\n3. Rewards are added automatically to your account",
-        "rewards_info": "🎁 Rewards per referral:\n📝 +{text} text messages\n🖼️ +{image} image generations\n🎥 +{video} video generations"
+        "rewards_info": "🎁 Rewards per referral:\n📝 +{text} text messages\n🖼️ +{image} image generations\n🎥 +{video} video generations",
+        "share_referral_link": "📤 Share Referral Link",
+        "my_referrals": "📊 My Referrals"
     },
     "payment": {
         "select_method": "💳 Select payment method:",
