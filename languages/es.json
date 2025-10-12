@@ -61,6 +61,7 @@
     "title": "🚀 ¡Bienvenido a Next Void, {first_name}!",
         "referral_bonus": "🎉 **¡Bono de Referido Aplicado!**\nTú y tu amigo recibieron:\n📝 +{text_reward} mensajes de texto\n🖼️ +{image_reward} generaciones de imagen\n🎥 +{video_reward} generaciones de video\n",
     "features": "Bienvenido a Next Void, donde creemos firmemente que la IA debe estar libre de censura y filtros. Sabemos que existen innumerables aplicaciones valiosas de la IA que las grandes corporaciones mantienen restringidas o bloqueadas. Nuestra misión es devolver la libertad de acceso a la IA y darte el poder de explorar y aprovechar todo su potencial sin límites.",
+    "start_prompt": "🔥 Empieza con un mensaje controvertido y descubre lo que crea Next Void.",
         "free_messages": "🎁 Mensajes gratuitos para nuevos usuarios:\n📝 Texto: {free_text} mensajes\n🖼️ Imágenes: {free_image} generaciones\n🎥 Videos: {free_video} generaciones",
         "after_free": "Después de usar tus mensajes gratuitos, necesitarás comprar un paquete para continuar.",
         "commands_info": "Usa /packages para ver paquetes disponibles\nUsa /dashboard para verificar tu uso\nUsa /referral para obtener tu enlace de referido\nUsa /help para más comandos"

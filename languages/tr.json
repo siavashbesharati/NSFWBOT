@@ -61,6 +61,7 @@
     "title": "🚀 Next Void'a hoş geldin, {first_name}!",
         "referral_bonus": "🎉 **Referans Bonusu Uygulandı!**\nSiz ve arkadaşınız ikisi de aldınız:\n📝 +{text_reward} metin mesajı\n🖼️ +{image_reward} görsel üretimi\n🎥 +{video_reward} video üretimi\n",
     "features": "Next Void'a hoş geldiniz; yapay zekânın sansürsüz ve filtresiz olması gerektiğine inanıyoruz. Büyük şirketlerce kısıtlanan veya engellenen sayısız değerli yapay zekâ uygulaması olduğunun farkındayız. Amacımız, yapay zekâya erişim özgürlüğünü geri kazandırmak ve onun tüm potansiyelini sınırsızca keşfetmeniz için sizi güçlendirmektir.",
+    "start_prompt": "🔥 Tartışmalı bir mesajla başla ve Next Void'in neler yaptığını gör.",
         "free_messages": "🎁 Yeni kullanıcılar için ücretsiz mesajlar:\n📝 Metin: {free_text} mesaj\n🖼️ Görseller: {free_image} üretim\n🎥 Videolar: {free_video} üretim",
         "after_free": "Ücretsiz mesajlarınızı kullandıktan sonra, devam etmek için bir paket satın almanız gerekecek.",
         "commands_info": "Mevcut paketleri görmek için /packages kullanın\nKullanımınızı kontrol etmek için /dashboard kullanın\nReferans bağlantınızı almak için /referral kullanın\nDaha fazla komut için /help kullanın"

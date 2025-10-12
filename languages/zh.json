@@ -61,6 +61,7 @@
     "title": "🚀 欢迎加入 Next Void，{first_name}！",
         "referral_bonus": "🎉 **推荐奖励已生效！**\n您和您的朋友都获得了：\n📝 +{text_reward} 条文本消息\n🖼️ +{image_reward} 次图片生成\n🎥 +{video_reward} 次视频生成\n",
     "features": "欢迎来到 Next Void，我们坚信 AI 应当保持无审查、无过滤。我们意识到有许多宝贵的 AI 应用被大型机构限制或封锁。我们的使命是让每个人重新获得访问 AI 的自由，帮助你毫无限制地探索并释放它的全部潜力。",
+        "start_prompt": "🔥 先发一个有争议的信息，看看 Next Void 会带来什么。",
         "free_messages": "🎁 新用户免费消息：\n📝 文本：{free_text} 条消息\n🖼️ 图片：{free_image} 次生成\n🎥 视频：{free_video} 次生成",
         "after_free": "使用完免费消息后，您需要购买套餐才能继续使用。",
         "commands_info": "使用 /packages 查看可用套餐\n使用 /dashboard 检查您的使用情况\n使用 /referral 获取您的推荐链接\n使用 /help 查看更多命令"

@@ -42,20 +42,11 @@ class TelegramBot:
         referral_bonus: Optional[Dict[str, int]] = None
     ) -> str:
         """Compose the localized welcome message."""
-        free_settings = self.db.get_free_message_settings()
         display_name = first_name or get_text('general.unknown_user', user_lang)
 
         welcome_title = get_text('welcome.title', user_lang, first_name=display_name)
         features = get_text('welcome.features', user_lang)
-        free_messages = get_text(
-            'welcome.free_messages',
-            user_lang,
-            free_text=free_settings['free_text_messages'],
-            free_image=free_settings['free_image_messages'],
-            free_video=free_settings['free_video_messages']
-        )
-        after_free = get_text('welcome.after_free', user_lang)
-        commands_info = get_text('welcome.commands_info', user_lang)
+        start_prompt = get_text('welcome.start_prompt', user_lang)
 
         referral_text = ""
         if referral_bonus:
@@ -72,11 +63,7 @@ class TelegramBot:
 
 {referral_text}{features}
 
-{free_messages}
-
-{after_free}
-
-{commands_info}
+{start_prompt}
         """
 
     def _build_language_keyboard(self, selected_lang: str, prefix: str) -> InlineKeyboardMarkup:
@@ -458,16 +445,8 @@ class TelegramBot:
                 callback_data="cmd_language"
             )
         ])
-        
-        # Row 4: Start
-        keyboard.append([
-            InlineKeyboardButton(
-                get_text('commands.start', user_lang), 
-                callback_data="cmd_start"
-            )
-        ])
-        
-        # Row 5: Admin commands (only for admins)
+
+        # Row 4: Admin commands (only for admins)
         admin_chat_id = self.db.get_setting('admin_chat_id', '0')
         try:
             admin_id = int(admin_chat_id) if admin_chat_id else 0
@@ -513,7 +492,6 @@ class TelegramBot:
             "cmd_referral": self.referral_command,
             "cmd_help": self.help_command,
             "cmd_language": self.language_command,
-            "cmd_start": self.start_command,
             "cmd_enterreferral": self.enter_referral_command,
             "cmd_testapi": self.test_api_command,
             "cmd_venicestatus": self.venice_status_command
@@ -560,15 +538,7 @@ class TelegramBot:
                 )
             ])
             
-            # Row 4: Start
-            keyboard.append([
-                InlineKeyboardButton(
-                    get_text('commands.start', user_lang), 
-                    callback_data="cmd_start"
-                )
-            ])
-            
-            # Row 5: Admin commands (only for admins)
+            # Row 4: Admin commands (only for admins)
             admin_chat_id = self.db.get_setting('admin_chat_id', '0')
             try:
                 admin_id = int(admin_chat_id) if admin_chat_id else 0
@@ -599,9 +569,7 @@ class TelegramBot:
             try:
                 # For glass menu callbacks, we'll handle them differently
                 # Instead of creating fake updates, we'll call special callback versions
-                if callback_data == "cmd_start":
-                    await self.start_command_callback(query, context, user_lang)
-                elif callback_data == "cmd_help":
+                if callback_data == "cmd_help":
                     await self.help_command_callback(query, context, user_lang)
                 elif callback_data == "cmd_dashboard":
                     await self.dashboard_command_callback(query, context, user_lang)
