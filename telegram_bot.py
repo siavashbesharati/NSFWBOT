@@ -34,11 +34,71 @@ class TelegramBot:
         self.ai_handler = OpenRouterAPI(database=self.db)
         self.payment_handler = PaymentHandler(self.db)
         self.app = None
+
+    def _build_welcome_message(
+        self,
+        first_name: Optional[str],
+        user_lang: str,
+        referral_bonus: Optional[Dict[str, int]] = None
+    ) -> str:
+        """Compose the localized welcome message."""
+        free_settings = self.db.get_free_message_settings()
+        display_name = first_name or get_text('general.unknown_user', user_lang)
+
+        welcome_title = get_text('welcome.title', user_lang, first_name=display_name)
+        features = get_text('welcome.features', user_lang)
+        free_messages = get_text(
+            'welcome.free_messages',
+            user_lang,
+            free_text=free_settings['free_text_messages'],
+            free_image=free_settings['free_image_messages'],
+            free_video=free_settings['free_video_messages']
+        )
+        after_free = get_text('welcome.after_free', user_lang)
+        commands_info = get_text('welcome.commands_info', user_lang)
+
+        referral_text = ""
+        if referral_bonus:
+            referral_text = get_text(
+                'welcome.referral_bonus',
+                user_lang,
+                text_reward=referral_bonus['text'],
+                image_reward=referral_bonus['image'],
+                video_reward=referral_bonus['video']
+            ) + "\n"
+
+        return f"""
+{welcome_title}
+
+{referral_text}{features}
+
+{free_messages}
+
+{after_free}
+
+{commands_info}
+        """
+
+    def _build_language_keyboard(self, selected_lang: str, prefix: str) -> InlineKeyboardMarkup:
+        languages = translation_manager.get_available_languages()
+        keyboard = []
+        lang_items = list(languages.items())
+
+        for i in range(0, len(lang_items), 2):
+            row = []
+            for j in range(2):
+                if i + j < len(lang_items):
+                    code, name = lang_items[i + j]
+                    label = f"{'✅ ' if code == selected_lang else ''}{name}"
+                    row.append(InlineKeyboardButton(text=label, callback_data=f"{prefix}{code}"))
+            if row:
+                keyboard.append(row)
+
+        return InlineKeyboardMarkup(keyboard)
         
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
         user = update.effective_user
-        chat_id = update.effective_chat.id
         
         # Get user's language preference
         user_lang = get_user_language(user.id, self.db)
@@ -56,7 +116,7 @@ class TelegramBot:
         )
         
         # Handle referral code if provided and user is new
-        referral_bonus_message = ""
+        referral_bonus_info: Optional[Dict[str, int]] = None
         if is_new_user and context.args:
             referral_code = context.args[0].upper()
             
@@ -69,38 +129,23 @@ class TelegramBot:
                         text_reward = int(settings.get('referral_text_reward', 3))
                         image_reward = int(settings.get('referral_image_reward', 1))
                         video_reward = int(settings.get('referral_video_reward', 1))
-                        
-                        referral_bonus_message = get_text('welcome.referral_bonus', user_lang,
-                                                        text_reward=text_reward,
-                                                        image_reward=image_reward,
-                                                        video_reward=video_reward)
-        
-        # Get free message settings from database
-        free_settings = self.db.get_free_message_settings()
-        
-        # Build welcome message using translations
-        welcome_title = get_text('welcome.title', user_lang, first_name=user.first_name)
-        features = get_text('welcome.features', user_lang)
-        free_messages = get_text('welcome.free_messages', user_lang,
-                               free_text=free_settings['free_text_messages'],
-                               free_image=free_settings['free_image_messages'],
-                               free_video=free_settings['free_video_messages'])
-        after_free = get_text('welcome.after_free', user_lang)
-        commands_info = get_text('welcome.commands_info', user_lang)
-        
-        welcome_message = f"""
-{welcome_title}
+                        referral_bonus_info = {
+                            'text': text_reward,
+                            'image': image_reward,
+                            'video': video_reward
+                        }
 
-{referral_bonus_message}{features}
+        context.user_data['start_context'] = {
+            'referral_bonus': referral_bonus_info
+        }
 
-{free_messages}
+        keyboard = self._build_language_keyboard(user_lang, "start_lang_")
+        select_text = get_text('language.select', user_lang)
+        current_lang = translation_manager.get_language_name(user_lang)
+        current_text = get_text('language.current', user_lang, language=current_lang)
+        prompt_message = f"{select_text}\n\n{current_text}"
 
-{after_free}
-
-{commands_info}
-        """
-        
-        await update.message.reply_text(welcome_message)
+        await update.message.reply_text(prompt_message, reply_markup=keyboard)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
@@ -149,32 +194,8 @@ class TelegramBot:
     async def start_command_callback(self, query, context, user_lang):
         """Handle start command from glass menu callback"""
         user = query.from_user
-        
-        # Get free message settings from database
-        free_settings = self.db.get_free_message_settings()
-        
-        # Build welcome message using translations with correct user language
-        welcome_title = get_text('welcome.title', user_lang, first_name=user.first_name)
-        features = get_text('welcome.features', user_lang)
-        free_messages = get_text('welcome.free_messages', user_lang,
-                               free_text=free_settings['free_text_messages'],
-                               free_image=free_settings['free_image_messages'],
-                               free_video=free_settings['free_video_messages'])
-        after_free = get_text('welcome.after_free', user_lang)
-        commands_info = get_text('welcome.commands_info', user_lang)
-        
-        welcome_message = f"""
-{welcome_title}
+        welcome_message = self._build_welcome_message(user.first_name, user_lang)
 
-{features}
-
-{free_messages}
-
-{after_free}
-
-{commands_info}
-        """
-        
         await query.edit_message_text(welcome_message)
 
     async def help_command_callback(self, query, context, user_lang):
@@ -360,26 +381,7 @@ class TelegramBot:
     async def language_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /language command - Show language selection"""
         user_lang = get_user_language(update.effective_user.id, self.db)
-        
-        # Create inline keyboard for language selection
-        keyboard = []
-        languages = translation_manager.get_available_languages()
-        
-        # Create 2 columns of language buttons
-        lang_items = list(languages.items())
-        for i in range(0, len(lang_items), 2):
-            row = []
-            for j in range(2):
-                if i + j < len(lang_items):
-                    code, name = lang_items[i + j]
-                    row.append(InlineKeyboardButton(
-                        text=f"{'✅ ' if code == user_lang else ''}{name}",
-                        callback_data=f"set_lang_{code}"
-                    ))
-            if row:
-                keyboard.append(row)
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = self._build_language_keyboard(user_lang, "set_lang_")
         
         select_text = get_text('language.select', user_lang)
         current_lang = translation_manager.get_language_name(user_lang)
@@ -388,6 +390,30 @@ class TelegramBot:
         message = f"{select_text}\n\n{current_text}"
         
         await update.message.reply_text(message, reply_markup=reply_markup)
+
+    async def handle_start_language_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle language selection during the start flow."""
+        query = update.callback_query
+
+        lang_code = query.data.replace("start_lang_", "")
+        if not translation_manager.is_supported_language(lang_code):
+            fallback_lang = getattr(translation_manager, 'DEFAULT_LANGUAGE', 'en')
+            error_msg = get_text('language.invalid', fallback_lang)
+            await query.edit_message_text(error_msg)
+            return
+
+        user_id = query.from_user.id
+        self.db.set_user_language(user_id, lang_code)
+
+        start_context = context.user_data.get('start_context', {})
+        referral_bonus = start_context.get('referral_bonus')
+
+        welcome_message = self._build_welcome_message(query.from_user.first_name, lang_code, referral_bonus)
+        await query.edit_message_text(welcome_message)
+
+        context.user_data.pop('start_context', None)
+
+        await self.show_glass_menu(query.message.chat.id, lang_code, context)
 
     async def show_glass_menu(self, chat_id, user_lang, context: ContextTypes.DEFAULT_TYPE, message_text=None):
         """Helper method to show the glass-style interactive menu"""
@@ -1178,6 +1204,10 @@ Use /packages to buy more credits!
         data = query.data
         user_id = update.effective_user.id
         user_lang = get_user_language(user_id, self.db)
+
+        if data.startswith("start_lang_"):
+            await self.handle_start_language_selection(update, context)
+            return
 
         # Handle language selection
         if data.startswith("set_lang_"):
