@@ -12,7 +12,7 @@
         "language": "🌐 Change language"
     },
     "menu_descriptions": {
-        "menu": "Show interactive command menu",
+        "menu": "Home",
         "reset": "Reset conversation history",
         "start": "Start the bot and get welcome message",
         "help": "Show available commands and help",

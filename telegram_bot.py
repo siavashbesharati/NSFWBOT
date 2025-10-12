@@ -175,10 +175,11 @@ class TelegramBot:
         message = f"{select_text}\n\n{current_text}"
         
         await update.message.reply_text(message, reply_markup=reply_markup)
-    
-    async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /menu command - Show interactive glass-style menu"""
-        user_lang = get_user_language(update.effective_user.id, self.db)
+
+    async def show_glass_menu(self, chat_id, user_lang, context: ContextTypes.DEFAULT_TYPE, message_text=None):
+        """Helper method to show the glass-style interactive menu"""
+        if message_text is None:
+            message_text = f"{get_text('glass_menu.title', user_lang)}\n{get_text('glass_menu.subtitle', user_lang)}"
         
         # Create glass-style menu with emoji icons
         keyboard = []
@@ -231,34 +232,34 @@ class TelegramBot:
             )
         ])
         
-        # Check if user is admin for admin commands
+        # Row 5: Admin commands (only for admins)
         admin_chat_id = self.db.get_setting('admin_chat_id', '0')
         try:
             admin_id = int(admin_chat_id) if admin_chat_id else 0
         except ValueError:
             admin_id = 0
             
-        if update.effective_user.id == admin_id and admin_id != 0:
-            # Row 5: Admin Commands
+        if chat_id == admin_id and admin_id != 0:
             keyboard.append([
                 InlineKeyboardButton(
                     f"🧪 {get_text('commands.testapi', user_lang)}", 
                     callback_data="cmd_testapi"
                 ),
                 InlineKeyboardButton(
-                    f"📊 Venice Status", 
+                    "📊 Venice Status", 
                     callback_data="cmd_venicestatus"
                 )
             ])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(chat_id=chat_id, text=message_text, reply_markup=reply_markup)
+    
+    async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /menu command - Show interactive glass-style menu"""
+        user_lang = get_user_language(update.effective_user.id, self.db)
+        chat_id = update.effective_chat.id
         
-        menu_title = get_text('glass_menu.title', user_lang)
-        menu_subtitle = get_text('glass_menu.subtitle', user_lang)
-        
-        message = f"{menu_title}\n{menu_subtitle}"
-        
-        await update.message.reply_text(message, reply_markup=reply_markup)
+        await self.show_glass_menu(chat_id, user_lang, context)
     
     async def handle_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle menu command callbacks"""
@@ -335,6 +336,9 @@ class TelegramBot:
                 full_message = f"{success_msg}\n\n{explanation}"
                 
                 await query.edit_message_text(full_message)
+                
+                # Show the glass menu again after language change
+                await self.show_glass_menu(query.message.chat.id, lang_code, context)
             else:
                 error_msg = get_text('language.invalid', lang_code)
                 await query.edit_message_text(error_msg)

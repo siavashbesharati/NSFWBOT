@@ -12,7 +12,7 @@
         "language": "🌐 Cambiar idioma"
     },
     "menu_descriptions": {
-        "menu": "Mostrar menú de comandos interactivo",
+        "menu": "Inicio",
         "reset": "Restablecer historial de conversación",
         "start": "Iniciar el bot y obtener mensaje de bienvenida",
         "help": "Mostrar comandos disponibles y ayuda",

@@ -12,7 +12,7 @@
         "language": "🌐 更改语言"
     },
     "menu_descriptions": {
-        "menu": "显示交互式命令菜单",
+        "menu": "主页",
         "reset": "重置对话历史",
         "start": "启动机器人并获取欢迎消息",
         "help": "显示可用命令和帮助",
