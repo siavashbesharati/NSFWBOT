@@ -30,6 +30,33 @@
         "command_executed": "تم تنفيذ الأمر بنجاح!",
         "back_to_menu": "🔙 العودة إلى القائمة"
     },
+    "general": {
+        "start_bot_first": "يرجى بدء البوت أولاً باستخدام /start",
+        "bot_offline": "🚫 البوت غير متصل حالياً. يرجى المحاولة لاحقاً.",
+        "unknown_user": "مستخدم",
+        "unknown_value": "غير معروف"
+    },
+    "buttons": {
+        "buy_packages": "📦 شراء الباقات",
+        "refresh": "🔄 تحديث",
+        "back_to_referrals": "🔙 العودة إلى الإحالات",
+        "buy_with_stars": "⭐ اشترِ بالنجوم ({price})",
+        "buy_with_ton": "💎 اشترِ بـ TON ({price})",
+        "pay_with_tonkeeper": "🔗 الدفع عبر Tonkeeper",
+        "check_payment_status": "🔍 التحقق من حالة الدفع",
+        "view_dashboard": "📊 عرض لوحة التحكم",
+        "buy_more": "🛒 شراء المزيد",
+        "check_again": "🔍 التحقق مرة أخرى"
+    },
+    "credits": {
+        "not_enough_text": "❌ لا تملك رصيداً كافياً لرسائل النص!\n\nاستخدم /packages لشراء المزيد من الرصيد.",
+        "not_enough_image": "❌ لا تملك رصيداً كافياً لرسائل الصور!\n\nاستخدم /packages لشراء المزيد من الرصيد.",
+        "not_enough_video": "❌ لا تملك رصيداً كافياً لرسائل الفيديو!\n\nاستخدم /packages لشراء المزيد من الرصيد."
+    },
+    "media": {
+        "default_image_caption": "ماذا ترى في هذه الصورة؟",
+        "default_video_caption": "قام المستخدم بإرسال فيديو"
+    },
     "welcome": {
         "title": "🤖 مرحباً بك في بوت الذكاء الاصطناعي، {first_name}!",
         "referral_bonus": "🎉 **تم تطبيق مكافأة الإحالة!**\nأنت وصديقك حصلتما على:\n📝 +{text_reward} رسائل نصية\n🖼️ +{image_reward} توليد صور\n🎥 +{video_reward} توليد فيديوهات\n",
@@ -64,7 +91,21 @@
         "payment_error": "❌ خطأ في معالجة الدفع: {error}",
         "database_error": "❌ حدث خطأ في قاعدة البيانات. يرجى المحاولة مرة أخرى.",
         "command_error": "خطأ في تنفيذ الأمر: {error}",
-        "invalid_command": "اختيار أمر غير صحيح"
+        "invalid_command": "اختيار أمر غير صحيح",
+        "referral_system_disabled": "🚫 نظام الإحالات معطل حالياً.",
+        "package_not_found": "❌ لم يتم العثور على الباقة.",
+        "transaction_not_found": "❌ لم يتم العثور على المعاملة.",
+        "transaction_not_owner": "❌ هذه المعاملة لا تخصك.",
+        "payment_status_error": "❌ خطأ في التحقق من حالة الدفع. يرجى المحاولة لاحقاً.",
+        "ton_only_feature": "ℹ️ هذه الميزة متاحة فقط لمدفوعات TON.",
+        "referral_already_used": "❌ لقد تم إحالتك بالفعل من قبل شخص آخر.",
+        "referral_apply_failed": "❌ فشل تطبيق الإحالة. يرجى المحاولة لاحقاً.",
+        "referral_invalid_code": "❌ رمز الإحالة غير صالح. يرجى التحقق والمحاولة مرة أخرى.",
+        "payment_verification_failed": "❌ فشل التحقق من الدفع. يرجى التواصل مع الدعم.",
+        "api_general_error": "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
+        "image_processing_error": "عذراً، حدث خطأ أثناء معالجة صورتك. يرجى المحاولة مرة أخرى.",
+        "video_processing_error": "عذراً، حدث خطأ أثناء معالجة الفيديو الخاص بك. يرجى المحاولة مرة أخرى.",
+        "unsupported_language": "❌ لغة غير مدعومة: {language}"
     },
     "success": {
         "api_test_passed": "✅ اختبار API للذكاء الاصطناعي نجح! الاتصال يعمل بشكل صحيح.",
@@ -76,7 +117,9 @@
         "testing_api": "🧪 اختبار اتصال API للذكاء الاصطناعي...",
         "checking_venice": "📊 التحقق من حالة Venice API...",
         "processing": "🔄 معالجة طلبك...",
-        "generating": "🎨 توليد الرد..."
+        "generating": "🎨 توليد الرد...",
+        "payment_already_completed": "✅ تم إكمال الدفع بالفعل! تمت إضافة رصيدك.",
+        "checking_blockchain": "🔍 جارٍ التحقق من البلوك تشين لدفعك..."
     },
     "dashboard": {
         "title": "📊 لوحة التحكم الخاصة بك",
@@ -95,6 +138,7 @@
         "buy_button": "💳 اشتري الآن",
         "price": "السعر: {price}",
         "includes": "يتضمن:",
+        "select": "📦 اختر باقة:",
         "text_messages": "📝 {count} رسائل نصية",
         "image_generations": "🖼️ {count} توليد صور",
         "video_generations": "🎥 {count} توليد فيديوهات"
@@ -107,7 +151,15 @@
         "how_it_works": "📋 كيف يعمل:\n1. شارك رابط الإحالة مع الأصدقاء\n2. عندما ينضمون باستخدام رابطك، كلاكما يحصل على مكافآت\n3. المكافآت تُضاف تلقائياً إلى حسابك",
         "rewards_info": "🎁 المكافآت لكل إحالة:\n📝 +{text} رسائل نصية\n🖼️ +{image} توليد صور\n🎥 +{video} توليد فيديوهات",
         "share_referral_link": "📤 مشاركة رابط الإحالة",
-        "my_referrals": "📊 إحالاتي"
+        "share_message": "انضم إلى هذا البوت الذكي واحصل على رصيد مجاني! {referral_link}",
+        "my_referrals": "📊 إحالاتي",
+        "no_referrals_message": "👥 **إحالاتك**\n\nلم تقم بإحالة أي شخص بعد. شارك رابط الإحالة لبدء كسب المكافآت!",
+        "referrals_header": "👥 **إحالاتك** ({count} إجماليًا)\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... و {count} أخرى",
+        "applied_success": "✅ **تم تطبيق الإحالة بنجاح!**\n\n🎉 أنت وصديقك حصلتما على:\n📝 +{text} رسائل نصية\n🖼️ +{image} توليد صور\n🎥 +{video} توليد فيديوهات\n\nاستمتع برسائلك المجانية!",
+        "enter_code_instructions": "🔗 **إدخال رمز الإحالة**\n\nيرجى إرسال رمز الإحالة الذي تريد استخدامه.\nيجب إرسال الرمز كرسالة عادية (ليس كأمر).\n\n💡 *نصيحة: يمكنك نسخ ولصق الرمز من رسالة صديقك.*",
+        "enter_command_help": "📝 **إدخال رمز الإحالة**\n\nلاستخدام رمز إحالة، أرسل:\n`/enterreferral YOUR_CODE`\n\nمثال: `/enterreferral ABC12345`\n\n💡 يمكنك استخدام رمز إحالة مرة واحدة فقط، وفقط إذا لم تتم إحالتك من قبل."
     },
     "payment": {
         "select_method": "💳 اختر طريقة الدفع:",
@@ -116,6 +168,22 @@
         "processing": "🔄 معالجة الدفع...",
         "success": "✅ الدفع ناجح!",
         "failed": "❌ فشل الدفع. يرجى المحاولة مرة أخرى.",
-        "cancelled": "❌ تم إلغاء الدفع."
+        "cancelled": "❌ تم إلغاء الدفع.",
+        "ton_instructions_title": "💎 تعليمات الدفع بـ TON {network}",
+        "ton_instructions_package": "📦 الباقة: {package}",
+        "ton_instructions_amount": "💰 المبلغ: {amount} TON",
+        "ton_instructions_address": "🏦 العنوان: `{address}`",
+        "ton_instructions_comment": "💬 التعليق: `{comment}`",
+        "ton_instructions_quick": "📱 دفع سريع:",
+        "ton_instructions_open": "[فتح في Tonkeeper]({url})",
+        "ton_instructions_auto_verify": "⏰ سيتم التحقق من دفعتك تلقائياً خلال بضع دقائق.",
+        "ton_network_mainnet": "🌐 الشبكة الرئيسية",
+        "ton_network_testnet": "🧪 ملاحظة: هذه شبكة اختبار - ستحصل فقط على TON تجريبي!",
+        "ton_payment_verified_title": "✅ **تم التحقق من الدفع!**",
+        "ton_payment_verified_details": "💰 المبلغ: {amount} TON\n📦 الباقة: {package}\n📅 التاريخ: {date}",
+        "ton_payment_verified_footer": "🎉 تمت إضافة رصيدك إلى حسابك!",
+        "ton_payment_pending_title": "⏳ **الدفع قيد الانتظار**",
+        "ton_payment_pending_details": "💰 المبلغ: {amount} TON\n📅 تم الإنشاء: {date}\n🆔 رقم المعاملة: {transaction}",
+        "ton_payment_pending_body": "❌ لم يتم العثور على الدفع على البلوك تشين بعد.\n\n**يرجى التأكد من أنك:**\n✅ أرسلت بالضبط {amount} TON\n✅ استخدمت التعليق الصحيح: `Payment_{transaction}`\n✅ أرسلت إلى عنوان المحفظة الصحيح\n\n⏰ قد يستغرق ظهور المعاملة على البلوك تشين بضع دقائق."
     }
 }

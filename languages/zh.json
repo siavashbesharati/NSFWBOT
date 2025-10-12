@@ -30,6 +30,33 @@
         "command_executed": "命令执行成功！",
         "back_to_menu": "🔙 返回菜单"
     },
+    "general": {
+        "start_bot_first": "请先使用 /start 启动机器人",
+        "bot_offline": "🚫 机器人当前离线。请稍后再试。",
+        "unknown_user": "用户",
+        "unknown_value": "未知"
+    },
+    "buttons": {
+        "buy_packages": "📦 购买套餐",
+        "refresh": "🔄 刷新",
+        "back_to_referrals": "🔙 返回邀请",
+        "buy_with_stars": "⭐ 用星星购买 ({price})",
+        "buy_with_ton": "💎 用 TON 购买 ({price})",
+        "pay_with_tonkeeper": "🔗 使用 Tonkeeper 支付",
+        "check_payment_status": "🔍 查看支付状态",
+        "view_dashboard": "📊 查看面板",
+        "buy_more": "🛒 继续购买",
+        "check_again": "🔍 再次检查"
+    },
+    "credits": {
+        "not_enough_text": "❌ 你的文本消息额度不足！\n\n使用 /packages 购买更多额度。",
+        "not_enough_image": "❌ 你的图片消息额度不足！\n\n使用 /packages 购买更多额度。",
+        "not_enough_video": "❌ 你的视频消息额度不足！\n\n使用 /packages 购买更多额度。"
+    },
+    "media": {
+        "default_image_caption": "这张图片中你看到了什么？",
+        "default_video_caption": "用户发送了一个视频"
+    },
     "welcome": {
         "title": "🤖 欢迎使用AI机器人，{first_name}！",
         "referral_bonus": "🎉 **推荐奖励已生效！**\n您和您的朋友都获得了：\n📝 +{text_reward} 条文本消息\n🖼️ +{image_reward} 次图片生成\n🎥 +{video_reward} 次视频生成\n",
@@ -62,7 +89,23 @@
         "reset_error": "❌ 重置对话错误：{error}",
         "insufficient_credits": "❌ 此操作积分不足。",
         "payment_error": "❌ 支付处理错误：{error}",
-        "database_error": "❌ 发生数据库错误。请重试。"
+        "database_error": "❌ 发生数据库错误。请重试。",
+        "command_error": "执行命令时出错：{error}",
+        "invalid_command": "无效的命令选择",
+        "referral_system_disabled": "🚫 推荐系统当前已禁用。",
+        "package_not_found": "❌ 未找到套餐。",
+        "transaction_not_found": "❌ 未找到交易。",
+        "transaction_not_owner": "❌ 该交易不属于你。",
+        "payment_status_error": "❌ 检查支付状态时出错。请重试。",
+        "ton_only_feature": "ℹ️ 此功能仅适用于 TON 支付。",
+        "referral_already_used": "❌ 你已经被其他人邀请过了。",
+        "referral_apply_failed": "❌ 无法应用邀请代码。请稍后重试。",
+        "referral_invalid_code": "❌ 邀请码无效。请检查后再试。",
+        "payment_verification_failed": "❌ 支付验证失败。请联系支持。",
+        "api_general_error": "抱歉，发生错误。请再试一次。",
+        "image_processing_error": "抱歉，处理你的图片时出错。请再试一次。",
+        "video_processing_error": "抱歉，处理你的视频时出错。请再试一次。",
+        "unsupported_language": "❌ 不支持的语言：{language}"
     },
     "success": {
         "api_test_passed": "✅ AI API测试成功！连接正常工作。",
@@ -74,7 +117,9 @@
         "testing_api": "🧪 正在测试AI API连接...",
         "checking_venice": "📊 正在检查Venice API状态...",
         "processing": "🔄 正在处理您的请求...",
-        "generating": "🎨 正在生成回复..."
+        "generating": "🎨 正在生成回复...",
+        "payment_already_completed": "✅ 支付已完成！你的额度已添加。",
+        "checking_blockchain": "🔍 正在查询区块链中的支付..."
     },
     "dashboard": {
         "title": "📊 您的仪表板",
@@ -93,6 +138,7 @@
         "buy_button": "💳 立即购买",
         "price": "价格：{price}",
         "includes": "包含：",
+        "select": "📦 请选择一个套餐：",
         "text_messages": "📝 {count} 条文本消息",
         "image_generations": "🖼️ {count} 次图片生成",
         "video_generations": "🎥 {count} 次视频生成"
@@ -105,7 +151,15 @@
         "how_it_works": "📋 工作原理：\n1. 与朋友分享您的推荐链接\n2. 当他们使用您的链接加入时，你们都会获得奖励\n3. 奖励会自动添加到您的账户",
         "rewards_info": "🎁 每次推荐奖励：\n📝 +{text} 条文本消息\n🖼️ +{image} 次图片生成\n🎥 +{video} 次视频生成",
         "share_referral_link": "📤 分享推荐链接",
-        "my_referrals": "📊 我的推荐"
+        "share_message": "加入这个AI机器人即可获得免费额度！{referral_link}",
+        "my_referrals": "📊 我的推荐",
+        "no_referrals_message": "👥 **你的邀请**\n\n你还没有邀请任何人。分享链接开始赚取奖励吧！",
+        "referrals_header": "👥 **你的邀请**（共 {count} 人）\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... 以及另外 {count} 人",
+        "applied_success": "✅ **邀请码应用成功！**\n\n🎉 你和你的朋友都获得了:\n📝 +{text} 条文本消息\n🖼️ +{image} 次图片生成\n🎥 +{video} 次视频生成\n\n尽情享受你的免费消息吧！",
+        "enter_code_instructions": "🔗 **输入邀请码**\n\n请发送你要使用的邀请码。\n邀请码需要以普通消息形式发送（不要使用命令）。\n\n💡 *提示：你可以从朋友的消息中复制粘贴邀请码。*",
+        "enter_command_help": "📝 **输入邀请码**\n\n要使用邀请码，请发送：\n`/enterreferral YOUR_CODE`\n\n示例：`/enterreferral ABC12345`\n\n💡 每个用户只能使用一次邀请码，且必须是未被邀请过的。"
     },
     "payment": {
         "select_method": "💳 选择支付方式：",
@@ -114,6 +168,22 @@
         "processing": "🔄 正在处理支付...",
         "success": "✅ 支付成功！",
         "failed": "❌ 支付失败。请重试。",
-        "cancelled": "❌ 支付已取消。"
+        "cancelled": "❌ 支付已取消。",
+        "ton_instructions_title": "💎 TON 支付说明 {network}",
+        "ton_instructions_package": "📦 套餐：{package}",
+        "ton_instructions_amount": "💰 金额：{amount} TON",
+        "ton_instructions_address": "🏦 地址：`{address}`",
+        "ton_instructions_comment": "💬 备注：`{comment}`",
+        "ton_instructions_quick": "📱 快速支付：",
+        "ton_instructions_open": "[在 Tonkeeper 中打开]({url})",
+        "ton_instructions_auto_verify": "⏰ 你的支付将在几分钟内自动验证。",
+        "ton_network_mainnet": "🌐 主网",
+        "ton_network_testnet": "🧪 注意：这是测试网——你只会收到测试 TON！",
+        "ton_payment_verified_title": "✅ **支付已验证！**",
+        "ton_payment_verified_details": "💰 金额：{amount} TON\n📦 套餐：{package}\n📅 日期：{date}",
+        "ton_payment_verified_footer": "🎉 额度已添加到你的账户！",
+        "ton_payment_pending_title": "⏳ **支付待确认**",
+        "ton_payment_pending_details": "💰 金额：{amount} TON\n📅 创建时间：{date}\n🆔 交易 ID：{transaction}",
+        "ton_payment_pending_body": "❌ 区块链中尚未找到支付。\n\n**请确保：**\n✅ 已准确发送 {amount} TON\n✅ 使用了正确的备注：`Payment_{transaction}`\n✅ 转账到了正确的钱包地址\n\n⏰ 交易显示在区块链上可能需要几分钟。"
     }
 }

@@ -30,6 +30,33 @@
         "command_executed": "Komut başarıyla yürütüldü!",
         "back_to_menu": "🔙 Menüye Dön"
     },
+    "general": {
+        "start_bot_first": "Lütfen önce /start komutuyla botu başlatın",
+        "bot_offline": "🚫 Bot şu anda çevrimdışı. Lütfen daha sonra tekrar deneyin.",
+        "unknown_user": "Kullanıcı",
+        "unknown_value": "Bilinmiyor"
+    },
+    "buttons": {
+        "buy_packages": "📦 Paket Satın Al",
+        "refresh": "🔄 Yenile",
+        "back_to_referrals": "🔙 Referanslara Dön",
+        "buy_with_stars": "⭐ Yıldız ile Satın Al ({price})",
+        "buy_with_ton": "💎 TON ile Satın Al ({price})",
+        "pay_with_tonkeeper": "🔗 Tonkeeper ile Öde",
+        "check_payment_status": "🔍 Ödeme Durumunu Kontrol Et",
+        "view_dashboard": "📊 Panoyu Görüntüle",
+        "buy_more": "🛒 Daha Fazla Satın Al",
+        "check_again": "🔍 Tekrar Kontrol Et"
+    },
+    "credits": {
+        "not_enough_text": "❌ Yeterli metin mesaj krediniz yok!\n\nDaha fazla kredi almak için /packages komutunu kullanın.",
+        "not_enough_image": "❌ Yeterli görsel mesaj krediniz yok!\n\nDaha fazla kredi almak için /packages komutunu kullanın.",
+        "not_enough_video": "❌ Yeterli video mesaj krediniz yok!\n\nDaha fazla kredi almak için /packages komutunu kullanın."
+    },
+    "media": {
+        "default_image_caption": "Bu görüntüde ne görüyorsun?",
+        "default_video_caption": "Kullanıcı bir video gönderdi"
+    },
     "welcome": {
         "title": "🤖 AI Bot'a hoş geldiniz, {first_name}!",
         "referral_bonus": "🎉 **Referans Bonusu Uygulandı!**\nSiz ve arkadaşınız ikisi de aldınız:\n📝 +{text_reward} metin mesajı\n🖼️ +{image_reward} görsel üretimi\n🎥 +{video_reward} video üretimi\n",
@@ -62,7 +89,23 @@
         "reset_error": "❌ Sohbet sıfırlama hatası: {error}",
         "insufficient_credits": "❌ Bu işlem için yetersiz kredi.",
         "payment_error": "❌ Ödeme işleme hatası: {error}",
-        "database_error": "❌ Veritabanı hatası oluştu. Lütfen tekrar deneyin."
+        "database_error": "❌ Veritabanı hatası oluştu. Lütfen tekrar deneyin.",
+        "command_error": "Komut yürütme hatası: {error}",
+        "invalid_command": "Geçersiz komut seçimi",
+        "referral_system_disabled": "🚫 Referans sistemi şu anda devre dışı.",
+        "package_not_found": "❌ Paket bulunamadı.",
+        "transaction_not_found": "❌ İşlem bulunamadı.",
+        "transaction_not_owner": "❌ Bu işlem size ait değil.",
+        "payment_status_error": "❌ Ödeme durumu kontrol edilirken hata oluştu. Lütfen tekrar deneyin.",
+        "ton_only_feature": "ℹ️ Bu özellik yalnızca TON ödemeleri için kullanılabilir.",
+        "referral_already_used": "❌ Zaten başka biri tarafından referans gösterildiniz.",
+        "referral_apply_failed": "❌ Referans uygulanamadı. Lütfen daha sonra tekrar deneyin.",
+        "referral_invalid_code": "❌ Referans kodu geçersiz. Lütfen kontrol edip tekrar deneyin.",
+        "payment_verification_failed": "❌ Ödeme doğrulaması başarısız oldu. Lütfen destekle iletişime geçin.",
+        "api_general_error": "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.",
+        "image_processing_error": "Üzgünüm, görüntünüz işlenirken bir hata oluştu. Lütfen tekrar deneyin.",
+        "video_processing_error": "Üzgünüm, videonuz işlenirken bir hata oluştu. Lütfen tekrar deneyin.",
+        "unsupported_language": "❌ Desteklenmeyen dil: {language}"
     },
     "success": {
         "api_test_passed": "✅ AI API testi başarılı! Bağlantı düzgün çalışıyor.",
@@ -74,7 +117,9 @@
         "testing_api": "🧪 AI API bağlantısı test ediliyor...",
         "checking_venice": "📊 Venice API durumu kontrol ediliyor...",
         "processing": "🔄 İsteğiniz işleniyor...",
-        "generating": "🎨 Yanıt üretiliyor..."
+        "generating": "🎨 Yanıt üretiliyor...",
+        "payment_already_completed": "✅ Ödeme zaten tamamlanmış! Kredileriniz eklendi.",
+        "checking_blockchain": "🔍 Ödemeniz için blok zinciri kontrol ediliyor..."
     },
     "dashboard": {
         "title": "📊 Panonuz",
@@ -93,6 +138,7 @@
         "buy_button": "💳 Şimdi Satın Al",
         "price": "Fiyat: {price}",
         "includes": "İçerikler:",
+        "select": "📦 Bir paket seçin:",
         "text_messages": "📝 {count} metin mesajı",
         "image_generations": "🖼️ {count} görsel üretimi",
         "video_generations": "🎥 {count} video üretimi"
@@ -105,7 +151,15 @@
         "how_it_works": "📋 Nasıl çalışır:\n1. Referans bağlantınızı arkadaşlarınızla paylaşın\n2. Bağlantınızı kullanarak katıldıklarında, ikiniz de ödül alırsınız\n3. Ödüller otomatik olarak hesabınıza eklenir",
         "rewards_info": "🎁 Referans başına ödüller:\n📝 +{text} metin mesajı\n🖼️ +{image} görsel üretimi\n🎥 +{video} video üretimi",
         "share_referral_link": "📤 Referans Bağlantısını Paylaş",
-        "my_referrals": "📊 Referanslarım"
+        "share_message": "Bu yapay zeka botuna katıl ve ücretsiz krediler kazan! {referral_link}",
+        "my_referrals": "📊 Referanslarım",
+        "no_referrals_message": "👥 **Referanslarınız**\n\nHenüz kimseyi referans göstermediniz. Ödül kazanmaya başlamak için referans bağlantınızı paylaşın!",
+        "referrals_header": "👥 **Referanslarınız** (toplam {count})\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... ve {count} tane daha",
+        "applied_success": "✅ **Referans Başarıyla Uygulandı!**\n\n🎉 Siz ve arkadaşınız şu ödülleri aldınız:\n📝 +{text} metin mesajı\n🖼️ +{image} görsel üretimi\n🎥 +{video} video üretimi\n\nÜcretsiz mesajlarınızın tadını çıkarın!",
+        "enter_code_instructions": "🔗 **Referans Kodu Gir**\n\nLütfen kullanmak istediğiniz referans kodunu gönderin.\nKodu normal bir mesaj olarak gönderin (komut olarak değil).\n\n💡 *İpucu: Kodu arkadaşınızın mesajından kopyalayıp yapıştırabilirsiniz.*",
+        "enter_command_help": "📝 **Referans Kodu Gir**\n\nReferans kodunu kullanmak için şunu gönderin:\n`/enterreferral YOUR_CODE`\n\nÖrnek: `/enterreferral ABC12345`\n\n💡 Referans kodunu yalnızca bir kez ve daha önce referans gösterilmediyseniz kullanabilirsiniz."
     },
     "payment": {
         "select_method": "💳 Ödeme yöntemini seçin:",
@@ -114,6 +168,22 @@
         "processing": "🔄 Ödeme işleniyor...",
         "success": "✅ Ödeme başarılı!",
         "failed": "❌ Ödeme başarısız. Lütfen tekrar deneyin.",
-        "cancelled": "❌ Ödeme iptal edildi."
+        "cancelled": "❌ Ödeme iptal edildi.",
+        "ton_instructions_title": "💎 TON Ödeme Talimatları {network}",
+        "ton_instructions_package": "📦 Paket: {package}",
+        "ton_instructions_amount": "💰 Tutar: {amount} TON",
+        "ton_instructions_address": "🏦 Adres: `{address}`",
+        "ton_instructions_comment": "💬 Açıklama: `{comment}`",
+        "ton_instructions_quick": "📱 Hızlı Ödeme:",
+        "ton_instructions_open": "[Tonkeeper'da Aç]({url})",
+        "ton_instructions_auto_verify": "⏰ Ödemeniz birkaç dakika içinde otomatik olarak doğrulanacaktır.",
+        "ton_network_mainnet": "🌐 ANA AĞ",
+        "ton_network_testnet": "🧪 Not: Bu TESTNET - yalnızca deneme TON alırsınız!",
+        "ton_payment_verified_title": "✅ **Ödeme Doğrulandı!**",
+        "ton_payment_verified_details": "💰 Tutar: {amount} TON\n📦 Paket: {package}\n📅 Tarih: {date}",
+        "ton_payment_verified_footer": "🎉 Kredileriniz hesabınıza eklendi!",
+        "ton_payment_pending_title": "⏳ **Ödeme Beklemede**",
+        "ton_payment_pending_details": "💰 Tutar: {amount} TON\n📅 Oluşturulma: {date}\n🆔 İşlem Kimliği: {transaction}",
+        "ton_payment_pending_body": "❌ Ödeme henüz blok zincirinde bulunamadı.\n\n**Lütfen emin olun ki:**\n✅ Tam olarak {amount} TON gönderdiniz\n✅ Doğru açıklamayı kullandınız: `Payment_{transaction}`\n✅ Doğru cüzdan adresine gönderdiniz\n\n⏰ İşlemin blok zincirinde görünmesi birkaç dakika sürebilir."
     }
 }

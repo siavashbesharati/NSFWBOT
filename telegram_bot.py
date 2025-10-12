@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 import io
 import os
+from urllib.parse import quote_plus
 
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup, 
@@ -259,13 +260,13 @@ class TelegramBot:
         user_data = self.db.get_user(user_id)
         
         if not user_data:
-            await query.edit_message_text("Please start the bot first with /start")
+            await query.edit_message_text(get_text('general.start_bot_first', user_lang))
             return
         
         # Check if referral system is enabled
         settings = self.db.get_all_settings()
         if settings.get('referral_system_enabled', 'true') != 'true':
-            await query.edit_message_text("🚫 Referral system is currently disabled.")
+            await query.edit_message_text(get_text('errors.referral_system_disabled', user_lang))
             return
         
         # Get or generate referral code
@@ -307,8 +308,11 @@ class TelegramBot:
         """
         
         # Create keyboard with gift options
+        share_text = get_text('referral.share_referral_link', user_lang)
+        share_message = get_text('referral.share_message', user_lang, referral_link=referral_link)
+        share_url = f"https://t.me/share/url?url={quote_plus(referral_link)}&text={quote_plus(share_message)}"
         keyboard = [
-            [InlineKeyboardButton(get_text('referral.share_referral_link', user_lang), url=f"https://t.me/share/url?url={referral_link}&text=Join this amazing AI bot!")],
+            [InlineKeyboardButton(share_text, url=share_url)],
             [InlineKeyboardButton(get_text('referral.my_referrals', user_lang), callback_data="show_referrals")],
             [InlineKeyboardButton(get_text('commands.enterreferral', user_lang), callback_data="enter_referral_from_gift")],
             [InlineKeyboardButton(get_text('glass_menu.back_to_menu', user_lang), callback_data="back_to_menu")]
@@ -372,7 +376,8 @@ class TelegramBot:
                         text=f"{'✅ ' if code == user_lang else ''}{name}",
                         callback_data=f"set_lang_{code}"
                     ))
-            keyboard.append(row)
+            if row:
+                keyboard.append(row)
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -725,54 +730,58 @@ class TelegramBot:
     
     async def packages_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Show available packages"""
+        user_lang = get_user_language(update.effective_user.id, self.db)
         packages = self.db.get_packages()
         
         if not packages:
-            await update.message.reply_text("No packages available at the moment.")
+            await update.message.reply_text(get_text('packages.no_packages', user_lang))
             return
         
         keyboard = []
-        message_text = "📦 Available Packages:\n\n"
+        message_lines = [get_text('packages.title', user_lang), ""]
         
         for package in packages:
-            package_text = (
-                f"🏷️ **{package['name']}**\n"
-                f"📝 {package['text_count']} text messages\n"
-                f"🖼️ {package['image_count']} image messages\n"
-                f"🎥 {package['video_count']} video messages\n"
-            )
+            package_lines = [
+                f"🏷️ **{package['name']}**",
+                get_text('packages.text_messages', user_lang, count=package['text_count']),
+                get_text('packages.image_generations', user_lang, count=package['image_count']),
+                get_text('packages.video_generations', user_lang, count=package['video_count'])
+            ]
             
             # Get payment settings from database
             telegram_stars_enabled = self.db.get_setting('telegram_stars_enabled', 'true') == 'true'
             ton_enabled = self.db.get_setting('ton_enabled', 'true') == 'true'
             
             if telegram_stars_enabled:
-                package_text += f"⭐ {package['price_stars']} Stars"
+                package_lines.append(get_text('packages.price', user_lang, price=f"⭐ {package['price_stars']} Stars"))
             
             if ton_enabled:
+                ton_price = get_text('packages.price', user_lang, price=f"💎 {package['price_ton']} TON")
                 if telegram_stars_enabled:
-                    package_text += f" or 💎 {package['price_ton']} TON"
+                    package_lines.append(ton_price)
                 else:
-                    package_text += f"💎 {package['price_ton']} TON"
+                    package_lines.append(ton_price)
             
-            message_text += package_text + "\n\n"
+            message_lines.extend(package_lines)
+            message_lines.append("")
             
             # Create payment buttons
             row = []
             if telegram_stars_enabled:
                 row.append(InlineKeyboardButton(
-                    f"⭐ Buy with Stars ({package['price_stars']})",
+                    get_text('buttons.buy_with_stars', user_lang, price=package['price_stars']),
                     callback_data=f"buy_stars_{package['id']}"
                 ))
             
             if ton_enabled:
                 row.append(InlineKeyboardButton(
-                    f"💎 Buy with TON ({package['price_ton']})",
+                    get_text('buttons.buy_with_ton', user_lang, price=package['price_ton']),
                     callback_data=f"buy_ton_{package['id']}"
                 ))
             
             keyboard.append(row)
         
+        message_text = "\n".join(message_lines).strip()
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(message_text, reply_markup=reply_markup, parse_mode='Markdown')
     
@@ -780,9 +789,10 @@ class TelegramBot:
         """Show user dashboard"""
         user_id = update.effective_user.id
         user_data = self.db.get_user(user_id)
+        user_lang = get_user_language(user_id, self.db)
         
         if not user_data:
-            await update.message.reply_text("Please start the bot first with /start")
+            await update.message.reply_text(get_text('general.start_bot_first', user_lang))
             return
         
         # Get free message settings from database
@@ -813,8 +823,8 @@ class TelegramBot:
         """
         
         keyboard = [
-            [InlineKeyboardButton("📦 Buy Packages", callback_data="show_packages")],
-            [InlineKeyboardButton("🔄 Refresh", callback_data="refresh_dashboard")]
+            [InlineKeyboardButton(get_text('buttons.buy_packages', user_lang), callback_data="show_packages")],
+            [InlineKeyboardButton(get_text('buttons.refresh', user_lang), callback_data="refresh_dashboard")]
         ]
         
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -824,9 +834,10 @@ class TelegramBot:
         """Show user balance"""
         user_id = update.effective_user.id
         user_data = self.db.get_user(user_id)
+        user_lang = get_user_language(user_id, self.db)
         
         if not user_data:
-            await update.message.reply_text("Please start the bot first with /start")
+            await update.message.reply_text(get_text('general.start_bot_first', user_lang))
             return
         
         # Get free message settings from database
@@ -859,15 +870,16 @@ Use /packages to buy more credits!
         """Show user's referral information"""
         user_id = update.effective_user.id
         user_data = self.db.get_user(user_id)
+        user_lang = get_user_language(user_id, self.db)
         
         if not user_data:
-            await update.message.reply_text("Please start the bot first with /start")
+            await update.message.reply_text(get_text('general.start_bot_first', user_lang))
             return
         
         # Check if referral system is enabled
         settings = self.db.get_all_settings()
         if settings.get('referral_system_enabled', 'true') != 'true':
-            await update.message.reply_text("🚫 Referral system is currently disabled.")
+            await update.message.reply_text(get_text('errors.referral_system_disabled', user_lang))
             return
         
         # Get or generate referral code
@@ -886,33 +898,33 @@ Use /packages to buy more credits!
         bot_username = (await context.bot.get_me()).username
         referral_link = f"https://t.me/{bot_username}?start={referral_code}"
         
+        title = get_text('referral.title', user_lang)
+        your_code = get_text('referral.your_code', user_lang, code=referral_code)
+        your_link = get_text('referral.your_link', user_lang, link=referral_link)
+        rewards_info = get_text('referral.rewards_info', user_lang, text=text_reward, image=image_reward, video=video_reward)
+        stats = get_text('referral.stats', user_lang, count=referral_stats['successful_referrals'], rewards="")
+        how_it_works = get_text('referral.how_it_works', user_lang)
+
         referral_text = f"""
-👥 **Referral Program**
+{title}
 
-🔗 Your referral link:
-`{referral_link}`
+{your_code}
 
-📋 Your referral code: `{referral_code}`
+{your_link}
 
-🎁 **Rewards (for both you and your friend):**
-📝 Text messages: +{text_reward}
-🖼️ Image generations: +{image_reward}
-🎥 Video generations: +{video_reward}
+{rewards_info}
 
-📊 **Your Statistics:**
-👥 Total referrals: {referral_stats['successful_referrals']}
+{stats}
 
-💡 **How it works:**
-1. Share your referral link with friends
-2. When they join using your link, you both get free messages!
-3. Each friend can only be referred once
-
-Share your link and earn free messages! 🚀
+{how_it_works}
         """
         
+        share_text = get_text('referral.share_referral_link', user_lang)
+        share_message = get_text('referral.share_message', user_lang, referral_link=referral_link)
+        share_url = f"https://t.me/share/url?url={quote_plus(referral_link)}&text={quote_plus(share_message)}"
         keyboard = [
-            [InlineKeyboardButton("📤 Share Referral Link", url=f"https://t.me/share/url?url={referral_link}&text=Join this amazing AI bot!")],
-            [InlineKeyboardButton("📊 My Referrals", callback_data="show_referrals")]
+            [InlineKeyboardButton(share_text, url=share_url)],
+            [InlineKeyboardButton(get_text('referral.my_referrals', user_lang), callback_data="show_referrals")]
         ]
         
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -922,15 +934,16 @@ Share your link and earn free messages! 🚀
         """Allow users to enter a referral code manually"""
         user_id = update.effective_user.id
         user_data = self.db.get_user(user_id)
+        user_lang = get_user_language(user_id, self.db)
         
         if not user_data:
-            await update.message.reply_text("Please start the bot first with /start")
+            await update.message.reply_text(get_text('general.start_bot_first', user_lang))
             return
         
         # Check if referral system is enabled
         settings = self.db.get_all_settings()
         if settings.get('referral_system_enabled', 'true') != 'true':
-            await update.message.reply_text("🚫 Referral system is currently disabled.")
+            await update.message.reply_text(get_text('errors.referral_system_disabled', user_lang))
             return
         
         if context.args:
@@ -942,7 +955,7 @@ Share your link and earn free messages! 🚀
             )
             
             if existing_referral:
-                await update.message.reply_text("❌ You have already been referred by someone else.")
+                await update.message.reply_text(get_text('errors.referral_already_used', user_lang))
                 return
             
             # Validate and process referral
@@ -951,42 +964,29 @@ Share your link and earn free messages! 🚀
                     text_reward = int(settings.get('referral_text_reward', 3))
                     image_reward = int(settings.get('referral_image_reward', 1))
                     video_reward = int(settings.get('referral_video_reward', 1))
-                    
-                    success_message = f"""
-✅ **Referral Applied Successfully!**
-
-🎉 You and your friend both received:
-📝 +{text_reward} text messages
-🖼️ +{image_reward} image generations
-🎥 +{video_reward} video generations
-
-Enjoy your free messages!
-                    """
-                    await update.message.reply_text(success_message, parse_mode='Markdown')
+                    await update.message.reply_text(
+                        get_text('referral.applied_success', user_lang, text=text_reward, image=image_reward, video=video_reward),
+                        parse_mode='Markdown'
+                    )
                 else:
-                    await update.message.reply_text("❌ Failed to apply referral. Please try again later.")
+                    await update.message.reply_text(get_text('errors.referral_apply_failed', user_lang))
             else:
-                await update.message.reply_text("❌ Invalid referral code. Please check and try again.")
+                await update.message.reply_text(get_text('errors.referral_invalid_code', user_lang))
         else:
-            await update.message.reply_text("""
-📝 **Enter Referral Code**
-
-To use a referral code, send:
-`/enterreferral YOUR_CODE`
-
-Example: `/enterreferral ABC12345`
-
-💡 You can only use a referral code once, and only if you haven't been referred before.
-            """, parse_mode='Markdown')
+            await update.message.reply_text(
+                get_text('referral.enter_command_help', user_lang),
+                parse_mode='Markdown'
+            )
     
     async def handle_text_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages"""
         user_id = update.effective_user.id
         user_message = update.message.text
+        user_lang = get_user_language(user_id, self.db)
         
         # Check if bot is running
         if not self.db.get_setting('bot_running', 'true') == 'true':
-            await update.message.reply_text("🚫 Bot is currently offline. Please try again later.")
+            await update.message.reply_text(get_text('general.bot_offline', user_lang))
             return
         
         # Update user activity
@@ -994,10 +994,7 @@ Example: `/enterreferral ABC12345`
         
         # Check if user has credits
         if not self.db.use_message_credit(user_id, 'text'):
-            await update.message.reply_text(
-                "❌ You don't have enough text message credits!\n\n"
-                "Use /packages to buy more credits."
-            )
+            await update.message.reply_text(get_text('credits.not_enough_text', user_lang))
             return
         
         # Show typing indicator
@@ -1039,15 +1036,16 @@ Example: `/enterreferral ABC12345`
             
         except Exception as e:
             logger.error(f"Error handling text message: {str(e)}")
-            await update.message.reply_text("Sorry, I encountered an error. Please try again.")
+            await update.message.reply_text(get_text('errors.api_general_error', user_lang))
     
     async def handle_image_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle image messages"""
         user_id = update.effective_user.id
+        user_lang = get_user_language(user_id, self.db)
         
         # Check if bot is running
         if not self.db.get_setting('bot_running', 'true') == 'true':
-            await update.message.reply_text("🚫 Bot is currently offline. Please try again later.")
+            await update.message.reply_text(get_text('general.bot_offline', user_lang))
             return
         
         # Update user activity
@@ -1055,10 +1053,7 @@ Example: `/enterreferral ABC12345`
         
         # Check if user has credits
         if not self.db.use_message_credit(user_id, 'image'):
-            await update.message.reply_text(
-                "❌ You don't have enough image message credits!\n\n"
-                "Use /packages to buy more credits."
-            )
+            await update.message.reply_text(get_text('credits.not_enough_image', user_lang))
             return
         
         # Show typing indicator
@@ -1073,7 +1068,7 @@ Example: `/enterreferral ABC12345`
             image_data = await file.download_as_bytearray()
             
             # Get caption if any
-            caption = update.message.caption or "What do you see in this image?"
+            caption = update.message.caption or get_text('media.default_image_caption', user_lang)
             
             # Check if conversation memory is enabled
             memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
@@ -1111,15 +1106,16 @@ Example: `/enterreferral ABC12345`
             
         except Exception as e:
             logger.error(f"Error handling image message: {str(e)}")
-            await update.message.reply_text("Sorry, I encountered an error processing your image. Please try again.")
+            await update.message.reply_text(get_text('errors.image_processing_error', user_lang))
     
     async def handle_video_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle video messages"""
         user_id = update.effective_user.id
+        user_lang = get_user_language(user_id, self.db)
         
         # Check if bot is running
         if not self.db.get_setting('bot_running', 'true') == 'true':
-            await update.message.reply_text("🚫 Bot is currently offline. Please try again later.")
+            await update.message.reply_text(get_text('general.bot_offline', user_lang))
             return
         
         # Update user activity
@@ -1127,10 +1123,7 @@ Example: `/enterreferral ABC12345`
         
         # Check if user has credits
         if not self.db.use_message_credit(user_id, 'video'):
-            await update.message.reply_text(
-                "❌ You don't have enough video message credits!\n\n"
-                "Use /packages to buy more credits."
-            )
+            await update.message.reply_text(get_text('credits.not_enough_video', user_lang))
             return
         
         # Show typing indicator
@@ -1138,7 +1131,7 @@ Example: `/enterreferral ABC12345`
         
         try:
             # Get caption if any
-            caption = update.message.caption or "User sent a video"
+            caption = update.message.caption or get_text('media.default_video_caption', user_lang)
             
             # Check if conversation memory is enabled
             memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
@@ -1175,34 +1168,35 @@ Example: `/enterreferral ABC12345`
             
         except Exception as e:
             logger.error(f"Error handling video message: {str(e)}")
-            await update.message.reply_text("Sorry, I encountered an error processing your video. Please try again.")
+            await update.message.reply_text(get_text('errors.video_processing_error', user_lang))
     
     async def handle_callback_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle callback queries from inline keyboards"""
         query = update.callback_query
         await query.answer()
-        
+
         data = query.data
         user_id = update.effective_user.id
-        
+        user_lang = get_user_language(user_id, self.db)
+
         # Handle language selection
         if data.startswith("set_lang_"):
             await self.handle_language_callback(update, context)
             return
-        
+
         # Handle menu command callbacks
         if data.startswith("cmd_") or data == "back_to_menu":
             await self.handle_menu_callback(update, context)
             return
-        
+
         if data.startswith("buy_stars_"):
             package_id = int(data.split("_")[2])
             await self.handle_stars_purchase(query, package_id)
-        
+
         elif data.startswith("buy_ton_"):
             package_id = int(data.split("_")[2])
             await self.handle_ton_purchase(query, package_id)
-        
+
         elif data == "show_packages":
             packages = self.db.get_packages()
             keyboard = []
@@ -1227,7 +1221,7 @@ Example: `/enterreferral ABC12345`
                 keyboard.append(row)
             
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_text("📦 Select a package:", reply_markup=reply_markup)
+            await query.edit_message_text(get_text('packages.select', user_lang), reply_markup=reply_markup)
         
         elif data == "refresh_dashboard":
             # Refresh dashboard for callback query
@@ -1235,7 +1229,7 @@ Example: `/enterreferral ABC12345`
             user_data = self.db.get_user(user_id)
             
             if not user_data:
-                await query.edit_message_text("Please start the bot first with /start")
+                await query.edit_message_text(get_text('general.start_bot_first', user_lang))
                 return
             
             # Get free message settings from database
@@ -1266,8 +1260,8 @@ Example: `/enterreferral ABC12345`
             """
             
             keyboard = [
-                [InlineKeyboardButton("📦 Buy Packages", callback_data="show_packages")],
-                [InlineKeyboardButton("🔄 Refresh", callback_data="refresh_dashboard")]
+                [InlineKeyboardButton(get_text('buttons.buy_packages', user_lang), callback_data="show_packages")],
+                [InlineKeyboardButton(get_text('buttons.refresh', user_lang), callback_data="refresh_dashboard")]
             ]
             
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1279,21 +1273,24 @@ Example: `/enterreferral ABC12345`
             referral_stats = self.db.get_user_referrals(user_id)
             
             if referral_stats['successful_referrals'] == 0:
-                await query.edit_message_text("👥 **Your Referrals**\n\nYou haven't referred anyone yet. Share your referral link to start earning rewards!", parse_mode='Markdown')
+                await query.edit_message_text(get_text('referral.no_referrals_message', user_lang), parse_mode='Markdown')
             else:
-                referrals_text = f"👥 **Your Referrals** ({referral_stats['successful_referrals']} total)\n\n"
+                referrals_text = get_text('referral.referrals_header', user_lang, count=referral_stats['successful_referrals'])
                 
                 for i, referral in enumerate(referral_stats['referrals'][:10], 1):  # Show last 10
-                    username = referral.get('username', 'Unknown')
-                    first_name = referral.get('first_name', 'User')
-                    date = referral.get('completed_date', 'Unknown')[:10] if referral.get('completed_date') else 'Unknown'
-                    
-                    referrals_text += f"{i}. @{username or first_name} - {date}\n"
+                    username = referral.get('username')
+                    first_name = referral.get('first_name') or get_text('general.unknown_user', user_lang)
+                    display_name = username or f"{first_name}"
+                    date_value = referral.get('completed_date')
+                    date = date_value[:10] if date_value else get_text('general.unknown_value', user_lang)
+
+                    referrals_text += get_text('referral.referrals_entry', user_lang, index=i, username=display_name, date=date)
                 
                 if len(referral_stats['referrals']) > 10:
-                    referrals_text += f"\n... and {len(referral_stats['referrals']) - 10} more"
+                    remaining = len(referral_stats['referrals']) - 10
+                    referrals_text += get_text('referral.referrals_more', user_lang, count=remaining)
                 
-                keyboard = [[InlineKeyboardButton("🔙 Back to Referrals", callback_data="back_to_referral")]]
+                keyboard = [[InlineKeyboardButton(get_text('buttons.back_to_referrals', user_lang), callback_data="back_to_referral")]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 await query.edit_message_text(referrals_text, reply_markup=reply_markup, parse_mode='Markdown')
         
@@ -1304,10 +1301,7 @@ Example: `/enterreferral ABC12345`
         elif data == "enter_referral_from_gift":
             # Handle enter referral code from gift menu
             await query.edit_message_text(
-                "🔗 **Enter Referral Code**\n\n"
-                "Please send me the referral code you want to use.\n"
-                "The code should be sent as a regular message (not a command).\n\n"
-                "💡 *Tip: You can copy and paste the code from your friend's message.*",
+                get_text('referral.enter_code_instructions', user_lang),
                 parse_mode='Markdown'
             )
             # Note: The actual referral code processing happens in the text message handler
@@ -1323,27 +1317,27 @@ Example: `/enterreferral ABC12345`
         if not package:
             await query.edit_message_text("❌ Package not found.")
             return
-        
+
         user_id = query.from_user.id
         amount = package['price_stars']
-        
+
         result = await self.payment_handler.create_stars_payment(user_id, package_id, amount)
-        
+
         if result['success']:
             # Create invoice for real payment
-                title = f"Package: {package['name']}"
-                description = f"{package['description']}\n📝 {package['text_count']} text\n🖼️ {package['image_count']} images\n🎥 {package['video_count']} videos"
-                
-                prices = [LabeledPrice(package['name'], amount)]
-                
-                await query.message.reply_invoice(
-                    title=title,
-                    description=description,
-                    payload=str(result['transaction_id']),
-                    provider_token="",  # Empty for Telegram Stars
-                    currency="XTR",
-                    prices=prices
-                )
+            title = f"Package: {package['name']}"
+            description = f"{package['description']}\n📝 {package['text_count']} text\n🖼️ {package['image_count']} images\n🎥 {package['video_count']} videos"
+
+            prices = [LabeledPrice(package['name'], amount)]
+
+            await query.message.reply_invoice(
+                title=title,
+                description=description,
+                payload=str(result['transaction_id']),
+                provider_token="",  # Empty for Telegram Stars
+                currency="XTR",
+                prices=prices
+            )
         else:
             await query.edit_message_text(f"❌ {result['error']}")
     

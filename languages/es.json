@@ -30,6 +30,33 @@
         "command_executed": "¡Comando ejecutado exitosamente!",
         "back_to_menu": "🔙 Volver al Menú"
     },
+    "general": {
+        "start_bot_first": "Por favor inicia el bot primero con /start",
+        "bot_offline": "🚫 El bot está desconectado en este momento. Por favor inténtalo más tarde.",
+        "unknown_user": "Usuario",
+        "unknown_value": "Desconocido"
+    },
+    "buttons": {
+        "buy_packages": "📦 Comprar paquetes",
+        "refresh": "🔄 Actualizar",
+        "back_to_referrals": "🔙 Volver a referidos",
+        "buy_with_stars": "⭐ Comprar con estrellas ({price})",
+        "buy_with_ton": "💎 Comprar con TON ({price})",
+        "pay_with_tonkeeper": "🔗 Pagar con Tonkeeper",
+        "check_payment_status": "🔍 Revisar estado del pago",
+        "view_dashboard": "📊 Ver panel",
+        "buy_more": "🛒 Comprar más",
+        "check_again": "🔍 Revisar nuevamente"
+    },
+    "credits": {
+        "not_enough_text": "❌ No tienes suficientes créditos de mensajes de texto!\n\nUsa /packages para comprar más créditos.",
+        "not_enough_image": "❌ No tienes suficientes créditos de mensajes con imagen!\n\nUsa /packages para comprar más créditos.",
+        "not_enough_video": "❌ No tienes suficientes créditos de mensajes de video!\n\nUsa /packages para comprar más créditos."
+    },
+    "media": {
+        "default_image_caption": "¿Qué ves en esta imagen?",
+        "default_video_caption": "El usuario envió un video"
+    },
     "welcome": {
         "title": "🤖 ¡Bienvenido al Bot de IA, {first_name}!",
         "referral_bonus": "🎉 **¡Bono de Referido Aplicado!**\nTú y tu amigo recibieron:\n📝 +{text_reward} mensajes de texto\n🖼️ +{image_reward} generaciones de imagen\n🎥 +{video_reward} generaciones de video\n",
@@ -62,7 +89,23 @@
         "reset_error": "❌ Error restableciendo conversación: {error}",
         "insufficient_credits": "❌ Créditos insuficientes para esta operación.",
         "payment_error": "❌ Error procesando pago: {error}",
-        "database_error": "❌ Ocurrió un error de base de datos. Por favor intenta nuevamente."
+        "database_error": "❌ Ocurrió un error de base de datos. Por favor intenta nuevamente.",
+        "command_error": "Error ejecutando comando: {error}",
+        "invalid_command": "Selección de comando inválida",
+        "referral_system_disabled": "🚫 El sistema de referidos está deshabilitado actualmente.",
+        "package_not_found": "❌ Paquete no encontrado.",
+        "transaction_not_found": "❌ Transacción no encontrada.",
+        "transaction_not_owner": "❌ Esta transacción no te pertenece.",
+        "payment_status_error": "❌ Error al verificar el estado del pago. Inténtalo de nuevo.",
+        "ton_only_feature": "ℹ️ Esta función solo está disponible para pagos con TON.",
+        "referral_already_used": "❌ Ya has sido referido por otra persona.",
+        "referral_apply_failed": "❌ No se pudo aplicar el referido. Inténtalo más tarde.",
+        "referral_invalid_code": "❌ Código de referido inválido. Verifica e inténtalo nuevamente.",
+        "payment_verification_failed": "❌ Falló la verificación del pago. Contacta al soporte.",
+        "api_general_error": "Lo siento, ocurrió un error. Inténtalo nuevamente.",
+        "image_processing_error": "Lo siento, ocurrió un error al procesar tu imagen. Inténtalo nuevamente.",
+        "video_processing_error": "Lo siento, ocurrió un error al procesar tu video. Inténtalo nuevamente.",
+        "unsupported_language": "❌ Idioma no soportado: {language}"
     },
     "success": {
         "api_test_passed": "✅ ¡Prueba de API de IA exitosa! La conexión funciona correctamente.",
@@ -74,7 +117,9 @@
         "testing_api": "🧪 Probando conexión API de IA...",
         "checking_venice": "📊 Verificando estado de Venice API...",
         "processing": "🔄 Procesando tu solicitud...",
-        "generating": "🎨 Generando respuesta..."
+        "generating": "🎨 Generando respuesta...",
+        "payment_already_completed": "✅ ¡El pago ya está completado! Tus créditos se han añadido.",
+        "checking_blockchain": "🔍 Revisando la cadena de bloques para tu pago..."
     },
     "dashboard": {
         "title": "📊 Tu Panel",
@@ -93,6 +138,7 @@
         "buy_button": "💳 Comprar Ahora",
         "price": "Precio: {price}",
         "includes": "Incluye:",
+        "select": "📦 Selecciona un paquete:",
         "text_messages": "📝 {count} mensajes de texto",
         "image_generations": "🖼️ {count} generaciones de imagen",
         "video_generations": "🎥 {count} generaciones de video"
@@ -105,7 +151,15 @@
         "how_it_works": "📋 Cómo funciona:\n1. Comparte tu enlace de referido con amigos\n2. Cuando se unan usando tu enlace, ambos obtienen recompensas\n3. Las recompensas se agregan automáticamente a tu cuenta",
         "rewards_info": "🎁 Recompensas por referido:\n📝 +{text} mensajes de texto\n🖼️ +{image} generaciones de imagen\n🎥 +{video} generaciones de video",
         "share_referral_link": "📤 Compartir Enlace de Referido",
-        "my_referrals": "📊 Mis Referidos"
+        "share_message": "Únete a este bot de IA y consigue créditos gratis. {referral_link}",
+        "my_referrals": "📊 Mis Referidos",
+        "no_referrals_message": "👥 **Tus referidos**\n\nAún no has referido a nadie. ¡Comparte tu enlace para empezar a ganar recompensas!",
+        "referrals_header": "👥 **Tus referidos** (total {count})\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... y {count} más",
+        "applied_success": "✅ **¡Referido aplicado con éxito!**\n\n🎉 Tú y tu amigo recibieron:\n📝 +{text} mensajes de texto\n🖼️ +{image} generaciones de imagen\n🎥 +{video} generaciones de video\n\n¡Disfruta tus mensajes gratis!",
+        "enter_code_instructions": "🔗 **Ingresa el código de referido**\n\nPor favor envía el código de referido que deseas usar.\nDebes enviarlo como un mensaje normal (no comando).\n\n💡 *Consejo: puedes copiar y pegar el código desde el mensaje de tu amigo.*",
+        "enter_command_help": "📝 **Ingresa el código de referido**\n\nPara usar un código, envía:\n`/enterreferral YOUR_CODE`\n\nEjemplo: `/enterreferral ABC12345`\n\n💡 Solo puedes usar un código de referido una vez y únicamente si nadie te ha referido antes."
     },
     "payment": {
         "select_method": "💳 Selecciona método de pago:",
@@ -114,6 +168,22 @@
         "processing": "🔄 Procesando pago...",
         "success": "✅ ¡Pago exitoso!",
         "failed": "❌ Pago falló. Por favor intenta nuevamente.",
-        "cancelled": "❌ Pago cancelado."
+        "cancelled": "❌ Pago cancelado.",
+        "ton_instructions_title": "💎 Instrucciones de pago TON {network}",
+        "ton_instructions_package": "📦 Paquete: {package}",
+        "ton_instructions_amount": "💰 Monto: {amount} TON",
+        "ton_instructions_address": "🏦 Dirección: `{address}`",
+        "ton_instructions_comment": "💬 Comentario: `{comment}`",
+        "ton_instructions_quick": "📱 Pago rápido:",
+        "ton_instructions_open": "[Abrir en Tonkeeper]({url})",
+        "ton_instructions_auto_verify": "⏰ Tu pago se verificará automáticamente en pocos minutos.",
+        "ton_network_mainnet": "🌐 MAINNET",
+        "ton_network_testnet": "🧪 Nota: Esto es TESTNET - ¡solo recibirás TON de prueba!",
+        "ton_payment_verified_title": "✅ **¡Pago verificado!**",
+        "ton_payment_verified_details": "💰 Monto: {amount} TON\n📦 Paquete: {package}\n📅 Fecha: {date}",
+        "ton_payment_verified_footer": "🎉 ¡Tus créditos se han añadido a tu cuenta!",
+        "ton_payment_pending_title": "⏳ **Pago pendiente**",
+        "ton_payment_pending_details": "💰 Monto: {amount} TON\n📅 Creado: {date}\n🆔 ID de transacción: {transaction}",
+        "ton_payment_pending_body": "❌ El pago aún no aparece en la cadena de bloques.\n\n**Asegúrate de:**\n✅ Haber enviado exactamente {amount} TON\n✅ Haber usado el comentario correcto: `Payment_{transaction}`\n✅ Haber enviado a la dirección correcta\n\n⏰ Puede tomar unos minutos para que la transacción aparezca en la cadena de bloques."
     }
 }

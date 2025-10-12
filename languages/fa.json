@@ -18,6 +18,33 @@
         "command_executed": "دستور با موفقیت اجرا شد!",
         "back_to_menu": "🔙 بازگشت به منو"
     },
+    "general": {
+        "start_bot_first": "لطفاً ابتدا ربات را با دستور /start شروع کنید",
+        "bot_offline": "🚫 ربات در حال حاضر آفلاین است. لطفاً بعداً دوباره تلاش کنید.",
+        "unknown_user": "کاربر",
+        "unknown_value": "نامشخص"
+    },
+    "buttons": {
+        "buy_packages": "📦 خرید بسته‌ها",
+        "refresh": "🔄 به‌روزرسانی",
+        "back_to_referrals": "🔙 بازگشت به معرفی‌ها",
+        "buy_with_stars": "⭐ خرید با ستاره ({price})",
+        "buy_with_ton": "💎 خرید با TON ({price})",
+        "pay_with_tonkeeper": "🔗 پرداخت با Tonkeeper",
+        "check_payment_status": "🔍 بررسی وضعیت پرداخت",
+        "view_dashboard": "📊 مشاهده داشبورد",
+        "buy_more": "🛒 خرید بیشتر",
+        "check_again": "🔍 بررسی دوباره"
+    },
+    "credits": {
+        "not_enough_text": "❌ اعتبار کافی برای پیام متنی ندارید!\n\nاز /packages برای خرید اعتبار بیشتر استفاده کنید.",
+        "not_enough_image": "❌ اعتبار کافی برای پیام تصویری ندارید!\n\nاز /packages برای خرید اعتبار بیشتر استفاده کنید.",
+        "not_enough_video": "❌ اعتبار کافی برای پیام ویدیویی ندارید!\n\nاز /packages برای خرید اعتبار بیشتر استفاده کنید."
+    },
+    "media": {
+        "default_image_caption": "در این تصویر چه می‌بینید؟",
+        "default_video_caption": "کاربر یک ویدیو ارسال کرد"
+    },
     "welcome": {
         "title": "🤖 به ربات هوش مصنوعی خوش آمدید، {first_name}!",
         "referral_bonus": "🎉 **پاداش معرفی اعمال شد!**\nشما و دوستتان هر دو دریافت کردید:\n📝 +{text_reward} پیام متنی\n🖼️ +{image_reward} تولید تصویر\n🎥 +{video_reward} تولید ویدیو\n",
@@ -50,7 +77,23 @@
         "reset_error": "❌ خطا در بازنشانی مکالمه: {error}",
         "insufficient_credits": "❌ اعتبار ناکافی برای این عملیات.",
         "payment_error": "❌ خطا در پردازش پرداخت: {error}",
-        "database_error": "❌ خطای پایگاه داده رخ داده است. لطفاً دوباره تلاش کنید."
+        "database_error": "❌ خطای پایگاه داده رخ داده است. لطفاً دوباره تلاش کنید.",
+        "command_error": "خطا در اجرای دستور: {error}",
+        "invalid_command": "انتخاب دستور نامعتبر",
+        "referral_system_disabled": "🚫 سیستم معرفی در حال حاضر غیرفعال است.",
+        "package_not_found": "❌ بسته پیدا نشد.",
+        "transaction_not_found": "❌ تراکنش پیدا نشد.",
+        "transaction_not_owner": "❌ این تراکنش متعلق به شما نیست.",
+        "payment_status_error": "❌ خطا در بررسی وضعیت پرداخت. لطفاً بعداً دوباره تلاش کنید.",
+        "ton_only_feature": "ℹ️ این ویژگی فقط برای پرداخت‌های TON در دسترس است.",
+        "referral_already_used": "❌ شما قبلاً توسط شخص دیگری معرفی شده‌اید.",
+        "referral_apply_failed": "❌ اعمال معرفی ناموفق بود. لطفاً بعداً دوباره تلاش کنید.",
+        "referral_invalid_code": "❌ کد معرفی نامعتبر است. لطفاً بررسی و دوباره تلاش کنید.",
+        "payment_verification_failed": "❌ تأیید پرداخت ناموفق بود. لطفاً با پشتیبانی تماس بگیرید.",
+        "api_general_error": "متأسفیم، خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+        "image_processing_error": "متأسفیم، هنگام پردازش تصویر شما خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+        "video_processing_error": "متأسفیم، هنگام پردازش ویدیوی شما خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+        "unsupported_language": "❌ زبان پشتیبانی نمی‌شود: {language}"
     },
     "success": {
         "api_test_passed": "✅ تست API هوش مصنوعی موفق بود! اتصال به درستی کار می‌کند.",
@@ -62,7 +105,9 @@
         "testing_api": "🧪 تست اتصال API هوش مصنوعی...",
         "checking_venice": "📊 بررسی وضعیت Venice API...",
         "processing": "🔄 پردازش درخواست شما...",
-        "generating": "🎨 تولید پاسخ..."
+        "generating": "🎨 تولید پاسخ...",
+        "payment_already_completed": "✅ پرداخت قبلاً تکمیل شده است! اعتبارات شما اضافه شد.",
+        "checking_blockchain": "🔍 در حال بررسی بلاک‌چین برای پرداخت شما..."
     },
     "dashboard": {
         "title": "📊 پنل کاربری شما",
@@ -81,6 +126,7 @@
         "buy_button": "💳 خرید",
         "price": "قیمت: {price}",
         "includes": "شامل:",
+        "select": "📦 یک بسته را انتخاب کنید:",
         "text_messages": "📝 {count} پیام متنی",
         "image_generations": "🖼️ {count} تولید تصویر",
         "video_generations": "🎥 {count} تولید ویدیو"
@@ -93,7 +139,15 @@
         "how_it_works": "📋 نحوه عملکرد:\n1. لینک معرفی خود را با دوستان به اشتراک بگذارید\n2. وقتی آنها با استفاده از لینک شما بپیوندند، هر دو پاداش دریافت می‌کنید\n3. پاداش‌ها به طور خودکار به حساب شما اضافه می‌شوند",
         "rewards_info": "🎁 پاداش هر معرفی:\n📝 +{text} پیام متنی\n🖼️ +{image} تولید تصویر\n🎥 +{video} تولید ویدیو",
         "share_referral_link": "📤 اشتراک لینک معرفی",
-        "my_referrals": "📊 معرفی‌های من"
+        "share_message": "به این ربات هوش مصنوعی بپیوند و اعتبار رایگان بگیر! {referral_link}",
+        "my_referrals": "📊 معرفی‌های من",
+        "no_referrals_message": "👥 **معرفی‌های شما**\n\nهنوز کسی را معرفی نکرده‌اید. لینک معرفی خود را به اشتراک بگذارید تا شروع به دریافت پاداش کنید!",
+        "referrals_header": "👥 **معرفی‌های شما** ({count} مورد)\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... و {count} مورد دیگر",
+        "applied_success": "✅ **کد معرفی با موفقیت اعمال شد!**\n\n🎉 شما و دوستتان دریافت کردید:\n📝 +{text} پیام متنی\n🖼️ +{image} تولید تصویر\n🎥 +{video} تولید ویدیو\n\nاز پیام‌های رایگان خود لذت ببرید!",
+        "enter_code_instructions": "🔗 **وارد کردن کد معرفی**\n\nلطفاً کد معرفی موردنظر خود را ارسال کنید.\nکد باید به صورت پیام عادی (نه دستور) ارسال شود.\n\n💡 *نکته: می‌توانید کد را از پیام دوستتان کپی و جای‌گذاری کنید.*",
+        "enter_command_help": "📝 **وارد کردن کد معرفی**\n\nبرای استفاده از کد معرفی، این‌گونه ارسال کنید:\n`/enterreferral YOUR_CODE`\n\nمثال: `/enterreferral ABC12345`\n\n💡 شما فقط یک‌بار می‌توانید از کد معرفی استفاده کنید و تنها در صورتی که قبلاً معرفی نشده باشید."
     },
     "payment": {
         "select_method": "💳 روش پرداخت را انتخاب کنید:",
@@ -102,6 +156,22 @@
         "processing": "🔄 پردازش پرداخت...",
         "success": "✅ پرداخت موفق!",
         "failed": "❌ پرداخت ناموفق. لطفاً دوباره تلاش کنید.",
-        "cancelled": "❌ پرداخت لغو شد."
+        "cancelled": "❌ پرداخت لغو شد.",
+        "ton_instructions_title": "💎 دستورالعمل پرداخت TON {network}",
+        "ton_instructions_package": "📦 بسته: {package}",
+        "ton_instructions_amount": "💰 مبلغ: {amount} TON",
+        "ton_instructions_address": "🏦 آدرس: `{address}`",
+        "ton_instructions_comment": "💬 توضیح: `{comment}`",
+        "ton_instructions_quick": "📱 پرداخت سریع:",
+        "ton_instructions_open": "[باز کردن در Tonkeeper]({url})",
+        "ton_instructions_auto_verify": "⏰ پرداخت شما ظرف چند دقیقه به‌صورت خودکار تأیید می‌شود.",
+        "ton_network_mainnet": "🌐 شبکه اصلی",
+        "ton_network_testnet": "🧪 توجه: این شبکه تست است - فقط TON آزمایشی دریافت می‌کنید!",
+        "ton_payment_verified_title": "✅ **پرداخت تأیید شد!**",
+        "ton_payment_verified_details": "💰 مبلغ: {amount} TON\n📦 بسته: {package}\n📅 تاریخ: {date}",
+        "ton_payment_verified_footer": "🎉 اعتبار شما به حساب‌تان اضافه شد!",
+        "ton_payment_pending_title": "⏳ **پرداخت در انتظار**",
+        "ton_payment_pending_details": "💰 مبلغ: {amount} TON\n📅 ایجاد شده: {date}\n🆔 شناسه تراکنش: {transaction}",
+        "ton_payment_pending_body": "❌ پرداخت هنوز در بلاک‌چین پیدا نشده است.\n\n**لطفاً مطمئن شوید که:**\n✅ دقیقاً {amount} TON ارسال کرده‌اید\n✅ از توضیح صحیح استفاده کرده‌اید: `Payment_{transaction}`\n✅ به آدرس صحیح کیف پول ارسال کرده‌اید\n\n⏰ ممکن است چند دقیقه طول بکشد تا تراکنش در بلاک‌چین نمایش داده شود."
     }
 }

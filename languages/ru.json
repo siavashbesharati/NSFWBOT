@@ -30,6 +30,33 @@
         "command_executed": "Команда выполнена успешно!",
         "back_to_menu": "🔙 Назад в Меню"
     },
+    "general": {
+        "start_bot_first": "Пожалуйста, сначала запустите бота командой /start",
+        "bot_offline": "🚫 Бот сейчас офлайн. Пожалуйста, попробуйте позже.",
+        "unknown_user": "Пользователь",
+        "unknown_value": "Неизвестно"
+    },
+    "buttons": {
+        "buy_packages": "📦 Купить пакеты",
+        "refresh": "🔄 Обновить",
+        "back_to_referrals": "🔙 Назад к рефералам",
+        "buy_with_stars": "⭐ Купить за звёзды ({price})",
+        "buy_with_ton": "💎 Купить за TON ({price})",
+        "pay_with_tonkeeper": "🔗 Оплатить через Tonkeeper",
+        "check_payment_status": "🔍 Проверить платеж",
+        "view_dashboard": "📊 Открыть панель",
+        "buy_more": "🛒 Купить ещё",
+        "check_again": "🔍 Проверить снова"
+    },
+    "credits": {
+        "not_enough_text": "❌ У вас недостаточно кредитов на текстовые сообщения!\n\nИспользуйте /packages, чтобы купить больше.",
+        "not_enough_image": "❌ У вас недостаточно кредитов на сообщения с изображениями!\n\nИспользуйте /packages, чтобы купить больше.",
+        "not_enough_video": "❌ У вас недостаточно кредитов на видеосообщения!\n\nИспользуйте /packages, чтобы купить больше."
+    },
+    "media": {
+        "default_image_caption": "Что вы видите на этом изображении?",
+        "default_video_caption": "Пользователь отправил видео"
+    },
     "welcome": {
         "title": "🤖 Добро пожаловать в AI бота, {first_name}!",
         "referral_bonus": "🎉 **Реферальный бонус применён!**\nВы и ваш друг получили:\n📝 +{text_reward} текстовых сообщений\n🖼️ +{image_reward} генераций изображений\n🎥 +{video_reward} генераций видео\n",
@@ -62,7 +89,23 @@
         "reset_error": "❌ Ошибка сброса разговора: {error}",
         "insufficient_credits": "❌ Недостаточно кредитов для этой операции.",
         "payment_error": "❌ Ошибка обработки платежа: {error}",
-        "database_error": "❌ Произошла ошибка базы данных. Пожалуйста, попробуйте снова."
+        "database_error": "❌ Произошла ошибка базы данных. Пожалуйста, попробуйте снова.",
+        "command_error": "Ошибка выполнения команды: {error}",
+        "invalid_command": "Неверный выбор команды",
+        "referral_system_disabled": "🚫 Реферальная система сейчас отключена.",
+        "package_not_found": "❌ Пакет не найден.",
+        "transaction_not_found": "❌ Транзакция не найдена.",
+        "transaction_not_owner": "❌ Эта транзакция не принадлежит вам.",
+        "payment_status_error": "❌ Ошибка при проверке статуса платежа. Попробуйте снова.",
+        "ton_only_feature": "ℹ️ Эта функция доступна только для платежей TON.",
+        "referral_already_used": "❌ Вас уже пригласил другой пользователь.",
+        "referral_apply_failed": "❌ Не удалось применить реферальный код. Попробуйте позже.",
+        "referral_invalid_code": "❌ Неверный реферальный код. Проверьте и попробуйте снова.",
+        "payment_verification_failed": "❌ Не удалось подтвердить платеж. Свяжитесь с поддержкой.",
+        "api_general_error": "Извините, произошла ошибка. Попробуйте ещё раз.",
+        "image_processing_error": "Извините, при обработке вашего изображения произошла ошибка. Попробуйте ещё раз.",
+        "video_processing_error": "Извините, при обработке вашего видео произошла ошибка. Попробуйте ещё раз.",
+        "unsupported_language": "❌ Неподдерживаемый язык: {language}"
     },
     "success": {
         "api_test_passed": "✅ Тест AI API прошёл успешно! Соединение работает правильно.",
@@ -74,7 +117,9 @@
         "testing_api": "🧪 Тестирование подключения AI API...",
         "checking_venice": "📊 Проверка статуса Venice API...",
         "processing": "🔄 Обработка вашего запроса...",
-        "generating": "🎨 Генерация ответа..."
+        "generating": "🎨 Генерация ответа...",
+        "payment_already_completed": "✅ Платёж уже завершён! Ваши кредиты добавлены.",
+        "checking_blockchain": "🔍 Проверяем блокчейн на наличие платежа..."
     },
     "dashboard": {
         "title": "📊 Ваша панель",
@@ -93,6 +138,7 @@
         "buy_button": "💳 Купить сейчас",
         "price": "Цена: {price}",
         "includes": "Включает:",
+        "select": "📦 Выберите пакет:",
         "text_messages": "📝 {count} текстовых сообщений",
         "image_generations": "🖼️ {count} генераций изображений",
         "video_generations": "🎥 {count} генераций видео"
@@ -105,7 +151,15 @@
         "how_it_works": "📋 Как это работает:\n1. Поделитесь вашей реферальной ссылкой с друзьями\n2. Когда они присоединяются по вашей ссылке, вы оба получаете награды\n3. Награды автоматически добавляются на ваш счёт",
         "rewards_info": "🎁 Награды за реферала:\n📝 +{text} текстовых сообщений\n🖼️ +{image} генераций изображений\n🎥 +{video} генераций видео",
         "share_referral_link": "📤 Поделиться реферальной ссылкой",
-        "my_referrals": "📊 Мои рефералы"
+        "share_message": "Присоединяйся к этому ИИ-боту и получай бесплатные кредиты! {referral_link}",
+        "my_referrals": "📊 Мои рефералы",
+        "no_referrals_message": "👥 **Ваши рефералы**\n\nВы ещё никого не пригласили. Поделитесь своей ссылкой, чтобы начать получать награды!",
+        "referrals_header": "👥 **Ваши рефералы** (всего {count})\n\n",
+        "referrals_entry": "{index}. @{username} — {date}\n",
+        "referrals_more": "\n... и ещё {count}",
+        "applied_success": "✅ **Реферальный код успешно применён!**\n\n🎉 Вы и ваш друг получили:\n📝 +{text} текстовых сообщений\n🖼️ +{image} генераций изображений\n🎥 +{video} генераций видео\n\nНаслаждайтесь бесплатными сообщениями!",
+        "enter_code_instructions": "🔗 **Введите реферальный код**\n\nПожалуйста, отправьте реферальный код, который хотите использовать.\nОтправьте код обычным сообщением (не командой).\n\n💡 *Подсказка: вы можете скопировать код из сообщения друга.*",
+        "enter_command_help": "📝 **Введите реферальный код**\n\nЧтобы использовать код, отправьте:\n`/enterreferral YOUR_CODE`\n\nНапример: `/enterreferral ABC12345`\n\n💡 Использовать реферальный код можно только один раз и только если вас ещё никто не приглашал."
     },
     "payment": {
         "select_method": "💳 Выберите способ оплаты:",
@@ -114,6 +168,22 @@
         "processing": "🔄 Обработка платежа...",
         "success": "✅ Платёж успешен!",
         "failed": "❌ Платёж не прошёл. Пожалуйста, попробуйте снова.",
-        "cancelled": "❌ Платёж отменён."
+        "cancelled": "❌ Платёж отменён.",
+        "ton_instructions_title": "💎 Инструкции по оплате TON {network}",
+        "ton_instructions_package": "📦 Пакет: {package}",
+        "ton_instructions_amount": "💰 Сумма: {amount} TON",
+        "ton_instructions_address": "🏦 Адрес: `{address}`",
+        "ton_instructions_comment": "💬 Комментарий: `{comment}`",
+        "ton_instructions_quick": "📱 Быстрая оплата:",
+        "ton_instructions_open": "[Открыть в Tonkeeper]({url})",
+        "ton_instructions_auto_verify": "⏰ Ваш платеж будет автоматически проверен в течение нескольких минут.",
+        "ton_network_mainnet": "🌐 MAINNET",
+        "ton_network_testnet": "🧪 Внимание: это TESTNET — вы получите только тестовые TON!",
+        "ton_payment_verified_title": "✅ **Платёж подтверждён!**",
+        "ton_payment_verified_details": "💰 Сумма: {amount} TON\n📦 Пакет: {package}\n📅 Дата: {date}",
+        "ton_payment_verified_footer": "🎉 Кредиты добавлены на ваш счёт!",
+        "ton_payment_pending_title": "⏳ **Платёж в ожидании**",
+        "ton_payment_pending_details": "💰 Сумма: {amount} TON\n📅 Создано: {date}\n🆔 ID транзакции: {transaction}",
+        "ton_payment_pending_body": "❌ Платёж ещё не найден в блокчейне.\n\n**Убедитесь, что:**\n✅ Отправили ровно {amount} TON\n✅ Использовали правильный комментарий: `Payment_{transaction}`\n✅ Отправили на правильный адрес\n\n⏰ Появление транзакции в блокчейне может занять несколько минут."
     }
 }

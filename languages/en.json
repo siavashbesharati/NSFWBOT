@@ -30,6 +30,33 @@
         "command_executed": "Command executed successfully!",
         "back_to_menu": "🔙 Back to Menu"
     },
+    "general": {
+        "start_bot_first": "Please start the bot first with /start",
+        "bot_offline": "🚫 Bot is currently offline. Please try again later.",
+        "unknown_user": "User",
+        "unknown_value": "Unknown"
+    },
+    "buttons": {
+        "buy_packages": "📦 Buy Packages",
+        "refresh": "🔄 Refresh",
+        "back_to_referrals": "🔙 Back to Referrals",
+        "buy_with_stars": "⭐ Buy with Stars ({price})",
+        "buy_with_ton": "💎 Buy with TON ({price})",
+        "pay_with_tonkeeper": "🔗 Pay with Tonkeeper",
+        "check_payment_status": "🔍 Check Payment Status",
+        "view_dashboard": "📊 View Dashboard",
+        "buy_more": "🛒 Buy More",
+        "check_again": "🔍 Check Again"
+    },
+    "credits": {
+        "not_enough_text": "❌ You don't have enough text message credits!\n\nUse /packages to buy more credits.",
+        "not_enough_image": "❌ You don't have enough image message credits!\n\nUse /packages to buy more credits.",
+        "not_enough_video": "❌ You don't have enough video message credits!\n\nUse /packages to buy more credits."
+    },
+    "media": {
+        "default_image_caption": "What do you see in this image?",
+        "default_video_caption": "User sent a video"
+    },
     "welcome": {
         "title": "🤖 Welcome to the AI Bot, {first_name}!",
         "referral_bonus": "🎉 **Referral Bonus Applied!**\nYou and your friend both received:\n📝 +{text_reward} text messages\n🖼️ +{image_reward} image generations\n🎥 +{video_reward} video generations\n",
@@ -64,7 +91,21 @@
         "payment_error": "❌ Payment processing error: {error}",
         "database_error": "❌ Database error occurred. Please try again.",
         "command_error": "Error executing command: {error}",
-        "invalid_command": "Invalid command selection"
+        "invalid_command": "Invalid command selection",
+        "referral_system_disabled": "🚫 Referral system is currently disabled.",
+        "package_not_found": "❌ Package not found.",
+        "transaction_not_found": "❌ Transaction not found.",
+        "transaction_not_owner": "❌ This transaction doesn't belong to you.",
+        "payment_status_error": "❌ Error checking payment status. Please try again.",
+        "ton_only_feature": "ℹ️ This feature is only available for TON payments.",
+        "referral_already_used": "❌ You have already been referred by someone else.",
+        "referral_apply_failed": "❌ Failed to apply referral. Please try again later.",
+        "referral_invalid_code": "❌ Invalid referral code. Please check and try again.",
+        "payment_verification_failed": "❌ Payment verification failed. Please contact support.",
+        "api_general_error": "Sorry, I encountered an error. Please try again.",
+        "image_processing_error": "Sorry, I encountered an error processing your image. Please try again.",
+        "video_processing_error": "Sorry, I encountered an error processing your video. Please try again.",
+        "unsupported_language": "❌ Unsupported language: {language}"
     },
     "success": {
         "api_test_passed": "✅ AI API test successful! The connection is working properly.",
@@ -76,7 +117,9 @@
         "testing_api": "🧪 Testing AI API connection...",
         "checking_venice": "📊 Checking Venice API status...",
         "processing": "🔄 Processing your request...",
-        "generating": "🎨 Generating response..."
+        "generating": "🎨 Generating response...",
+        "payment_already_completed": "✅ Payment already completed! Your credits have been added.",
+        "checking_blockchain": "🔍 Checking blockchain for your payment..."
     },
     "dashboard": {
         "title": "📊 Your Dashboard",
@@ -95,6 +138,7 @@
         "buy_button": "💳 Buy Now",
         "price": "Price: {price}",
         "includes": "Includes:",
+        "select": "📦 Select a package:",
         "text_messages": "📝 {count} text messages",
         "image_generations": "🖼️ {count} image generations", 
         "video_generations": "🎥 {count} video generations"
@@ -107,7 +151,15 @@
         "how_it_works": "📋 How it works:\n1. Share your referral link with friends\n2. When they join using your link, both of you get rewards\n3. Rewards are added automatically to your account",
         "rewards_info": "🎁 Rewards per referral:\n📝 +{text} text messages\n🖼️ +{image} image generations\n🎥 +{video} video generations",
         "share_referral_link": "📤 Share Referral Link",
-        "my_referrals": "📊 My Referrals"
+        "share_message": "Join this AI bot and get free credits! {referral_link}",
+        "my_referrals": "📊 My Referrals",
+        "no_referrals_message": "👥 **Your Referrals**\n\nYou haven't referred anyone yet. Share your referral link to start earning rewards!",
+        "referrals_header": "👥 **Your Referrals** ({count} total)\n\n",
+        "referrals_entry": "{index}. @{username} - {date}\n",
+        "referrals_more": "\n... and {count} more",
+        "applied_success": "✅ **Referral Applied Successfully!**\n\n🎉 You and your friend both received:\n📝 +{text} text messages\n🖼️ +{image} image generations\n🎥 +{video} video generations\n\nEnjoy your free messages!",
+        "enter_code_instructions": "🔗 **Enter Referral Code**\n\nPlease send me the referral code you want to use.\nThe code should be sent as a regular message (not a command).\n\n💡 *Tip: You can copy and paste the code from your friend's message.*",
+        "enter_command_help": "📝 **Enter Referral Code**\n\nTo use a referral code, send:\n`/enterreferral YOUR_CODE`\n\nExample: `/enterreferral ABC12345`\n\n💡 You can only use a referral code once, and only if you haven't been referred before."
     },
     "payment": {
         "select_method": "💳 Select payment method:",
@@ -116,6 +168,22 @@
         "processing": "🔄 Processing payment...",
         "success": "✅ Payment successful!",
         "failed": "❌ Payment failed. Please try again.",
-        "cancelled": "❌ Payment cancelled."
+        "cancelled": "❌ Payment cancelled.",
+        "ton_instructions_title": "💎 TON Payment Instructions {network}",
+        "ton_instructions_package": "📦 Package: {package}",
+        "ton_instructions_amount": "💰 Amount: {amount} TON",
+        "ton_instructions_address": "🏦 Address: `{address}`",
+        "ton_instructions_comment": "💬 Comment: `{comment}`",
+        "ton_instructions_quick": "📱 Quick Payment:",
+        "ton_instructions_open": "[Open in Tonkeeper]({url})",
+        "ton_instructions_auto_verify": "⏰ Your payment will be verified automatically within a few minutes.",
+        "ton_network_mainnet": "🌐 MAINNET",
+        "ton_network_testnet": "🧪 Note: This is TESTNET - you will receive test TON only!",
+        "ton_payment_verified_title": "✅ **Payment Verified!**",
+        "ton_payment_verified_details": "💰 Amount: {amount} TON\n📦 Package: {package}\n📅 Date: {date}",
+        "ton_payment_verified_footer": "🎉 Your credits have been added to your account!",
+        "ton_payment_pending_title": "⏳ **Payment Pending**",
+        "ton_payment_pending_details": "💰 Amount: {amount} TON\n📅 Created: {date}\n🆔 Transaction ID: {transaction}",
+        "ton_payment_pending_body": "❌ Payment not found on blockchain yet.\n\n**Please make sure you:**\n✅ Sent exactly {amount} TON\n✅ Used the correct comment: `Payment_{transaction}`\n✅ Sent to the correct wallet address\n\n⏰ It may take a few minutes for the transaction to appear on the blockchain."
     }
 }
