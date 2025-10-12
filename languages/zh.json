@@ -58,9 +58,9 @@
         "default_video_caption": "用户发送了一个视频"
     },
     "welcome": {
-        "title": "🤖 欢迎使用AI机器人，{first_name}！",
+    "title": "🚀 欢迎加入 Next Void，{first_name}！",
         "referral_bonus": "🎉 **推荐奖励已生效！**\n您和您的朋友都获得了：\n📝 +{text_reward} 条文本消息\n🖼️ +{image_reward} 次图片生成\n🎥 +{video_reward} 次视频生成\n",
-        "features": "我可以帮助您：\n📝 文本对话\n🖼️ 图片分析\n🎥 视频回复",
+    "features": "欢迎来到 Next Void，我们坚信 AI 应当保持无审查、无过滤。我们意识到有许多宝贵的 AI 应用被大型机构限制或封锁。我们的使命是让每个人重新获得访问 AI 的自由，帮助你毫无限制地探索并释放它的全部潜力。",
         "free_messages": "🎁 新用户免费消息：\n📝 文本：{free_text} 条消息\n🖼️ 图片：{free_image} 次生成\n🎥 视频：{free_video} 次生成",
         "after_free": "使用完免费消息后，您需要购买套餐才能继续使用。",
         "commands_info": "使用 /packages 查看可用套餐\n使用 /dashboard 检查您的使用情况\n使用 /referral 获取您的推荐链接\n使用 /help 查看更多命令"
@@ -151,7 +151,7 @@
         "how_it_works": "📋 工作原理：\n1. 与朋友分享您的推荐链接\n2. 当他们使用您的链接加入时，你们都会获得奖励\n3. 奖励会自动添加到您的账户",
         "rewards_info": "🎁 每次推荐奖励：\n📝 +{text} 条文本消息\n🖼️ +{image} 次图片生成\n🎥 +{video} 次视频生成",
         "share_referral_link": "📤 分享推荐链接",
-        "share_message": "加入这个AI机器人即可获得免费额度！{referral_link}",
+    "share_message": "大家好，我想和你们分享一件令人兴奋的事情！我最近发现了一个名为 Next Void 的出色平台。他们相信无审查、无过滤的 AI 力量，并且致力于打破大公司筑起的壁垒。Next Void 提供免费且无限制的 AI 访问，这意味着我们可以用过去受限或被封锁的方式来探索和使用 AI。这一切都是为了让我们可以毫无束缚地创新与创作。去看看吧，记得告诉我你的想法！#NextVoid #AI自由 {referral_link}",
         "my_referrals": "📊 我的推荐",
         "no_referrals_message": "👥 **你的邀请**\n\n你还没有邀请任何人。分享链接开始赚取奖励吧！",
         "referrals_header": "👥 **你的邀请**（共 {count} 人）\n\n",

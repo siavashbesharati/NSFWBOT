@@ -58,9 +58,9 @@
         "default_video_caption": "Kullanıcı bir video gönderdi"
     },
     "welcome": {
-        "title": "🤖 AI Bot'a hoş geldiniz, {first_name}!",
+    "title": "🚀 Next Void'a hoş geldin, {first_name}!",
         "referral_bonus": "🎉 **Referans Bonusu Uygulandı!**\nSiz ve arkadaşınız ikisi de aldınız:\n📝 +{text_reward} metin mesajı\n🖼️ +{image_reward} görsel üretimi\n🎥 +{video_reward} video üretimi\n",
-        "features": "Size şunlarda yardımcı olabilirim:\n📝 Metin konuşmaları\n🖼️ Görsel analizi\n🎥 Video yanıtları",
+    "features": "Next Void'a hoş geldiniz; yapay zekânın sansürsüz ve filtresiz olması gerektiğine inanıyoruz. Büyük şirketlerce kısıtlanan veya engellenen sayısız değerli yapay zekâ uygulaması olduğunun farkındayız. Amacımız, yapay zekâya erişim özgürlüğünü geri kazandırmak ve onun tüm potansiyelini sınırsızca keşfetmeniz için sizi güçlendirmektir.",
         "free_messages": "🎁 Yeni kullanıcılar için ücretsiz mesajlar:\n📝 Metin: {free_text} mesaj\n🖼️ Görseller: {free_image} üretim\n🎥 Videolar: {free_video} üretim",
         "after_free": "Ücretsiz mesajlarınızı kullandıktan sonra, devam etmek için bir paket satın almanız gerekecek.",
         "commands_info": "Mevcut paketleri görmek için /packages kullanın\nKullanımınızı kontrol etmek için /dashboard kullanın\nReferans bağlantınızı almak için /referral kullanın\nDaha fazla komut için /help kullanın"
@@ -151,7 +151,7 @@
         "how_it_works": "📋 Nasıl çalışır:\n1. Referans bağlantınızı arkadaşlarınızla paylaşın\n2. Bağlantınızı kullanarak katıldıklarında, ikiniz de ödül alırsınız\n3. Ödüller otomatik olarak hesabınıza eklenir",
         "rewards_info": "🎁 Referans başına ödüller:\n📝 +{text} metin mesajı\n🖼️ +{image} görsel üretimi\n🎥 +{video} video üretimi",
         "share_referral_link": "📤 Referans Bağlantısını Paylaş",
-        "share_message": "Bu yapay zeka botuna katıl ve ücretsiz krediler kazan! {referral_link}",
+    "share_message": "Herkese selam, sizinle heyecan verici bir şey paylaşmak istedim! Kısa süre önce Next Void adlı inanılmaz bir platform keşfettim. Sansürsüz ve filtresiz yapay zekânın gücüne inanıyorlar ve büyük şirketlerin ortaya koyduğu engelleri yıkmak için çalışıyorlar. Next Void, yapay zekâya ücretsiz ve sınırsız erişim sağlıyor; yani daha önce kısıtlanan ya da engellenen yollarla yapay zekâyı keşfedebilir ve kullanabiliriz. Tüm mesele, sınırsızca yenilik yapma ve üretme özgürlüğü. Bir göz atın ve ne düşündüğünüzü söyleyin! #NextVoid #YapayZekaÖzgürlüğü {referral_link}",
         "my_referrals": "📊 Referanslarım",
         "no_referrals_message": "👥 **Referanslarınız**\n\nHenüz kimseyi referans göstermediniz. Ödül kazanmaya başlamak için referans bağlantınızı paylaşın!",
         "referrals_header": "👥 **Referanslarınız** (toplam {count})\n\n",

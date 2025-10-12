@@ -58,9 +58,9 @@
         "default_video_caption": "El usuario envió un video"
     },
     "welcome": {
-        "title": "🤖 ¡Bienvenido al Bot de IA, {first_name}!",
+    "title": "🚀 ¡Bienvenido a Next Void, {first_name}!",
         "referral_bonus": "🎉 **¡Bono de Referido Aplicado!**\nTú y tu amigo recibieron:\n📝 +{text_reward} mensajes de texto\n🖼️ +{image_reward} generaciones de imagen\n🎥 +{video_reward} generaciones de video\n",
-        "features": "Puedo ayudarte con:\n📝 Conversaciones de texto\n🖼️ Análisis de imágenes\n🎥 Respuestas de video",
+    "features": "Bienvenido a Next Void, donde creemos firmemente que la IA debe estar libre de censura y filtros. Sabemos que existen innumerables aplicaciones valiosas de la IA que las grandes corporaciones mantienen restringidas o bloqueadas. Nuestra misión es devolver la libertad de acceso a la IA y darte el poder de explorar y aprovechar todo su potencial sin límites.",
         "free_messages": "🎁 Mensajes gratuitos para nuevos usuarios:\n📝 Texto: {free_text} mensajes\n🖼️ Imágenes: {free_image} generaciones\n🎥 Videos: {free_video} generaciones",
         "after_free": "Después de usar tus mensajes gratuitos, necesitarás comprar un paquete para continuar.",
         "commands_info": "Usa /packages para ver paquetes disponibles\nUsa /dashboard para verificar tu uso\nUsa /referral para obtener tu enlace de referido\nUsa /help para más comandos"
@@ -151,7 +151,7 @@
         "how_it_works": "📋 Cómo funciona:\n1. Comparte tu enlace de referido con amigos\n2. Cuando se unan usando tu enlace, ambos obtienen recompensas\n3. Las recompensas se agregan automáticamente a tu cuenta",
         "rewards_info": "🎁 Recompensas por referido:\n📝 +{text} mensajes de texto\n🖼️ +{image} generaciones de imagen\n🎥 +{video} generaciones de video",
         "share_referral_link": "📤 Compartir Enlace de Referido",
-        "share_message": "Únete a este bot de IA y consigue créditos gratis. {referral_link}",
+    "share_message": "¡Hola a todos! Quiero compartir algo emocionante con ustedes. Hace poco descubrí una plataforma increíble llamada Next Void. Creen en el poder de una IA sin censura ni filtros y están en una misión para derribar las barreras que suelen imponer las grandes corporaciones. Next Void ofrece acceso gratuito y sin restricciones a la IA, lo que significa que podemos explorarla y usarla de formas que antes estaban limitadas o bloqueadas. Todo se trata de darnos la libertad de innovar y crear sin ataduras. ¡Échenle un vistazo y cuéntenme qué les parece! #NextVoid #LibertadIA {referral_link}",
         "my_referrals": "📊 Mis Referidos",
         "no_referrals_message": "👥 **Tus referidos**\n\nAún no has referido a nadie. ¡Comparte tu enlace para empezar a ganar recompensas!",
         "referrals_header": "👥 **Tus referidos** (total {count})\n\n",

@@ -58,9 +58,9 @@
         "default_video_caption": "User sent a video"
     },
     "welcome": {
-        "title": "🤖 Welcome to the AI Bot, {first_name}!",
+    "title": "🚀 Welcome to Next Void, {first_name}!",
         "referral_bonus": "🎉 **Referral Bonus Applied!**\nYou and your friend both received:\n📝 +{text_reward} text messages\n🖼️ +{image_reward} image generations\n🎥 +{video_reward} video generations\n",
-        "features": "I can help you with:\n📝 Text conversations\n🖼️ Image analysis\n🎥 Video responses",
+    "features": "Welcome to Next Void, where we firmly believe that AI should be uncensored and unfiltered. We recognize that countless valuable applications of AI are restricted or blocked by corporate entities. Our mission is to restore freedom of access to AI, empowering you to explore and harness its full potential without limitations.",
         "free_messages": "🎁 Free Messages for new users:\n📝 Text: {free_text} messages\n🖼️ Images: {free_image} generations\n🎥 Videos: {free_video} generations",
         "after_free": "After using your free messages, you'll need to purchase a package to continue.",
         "commands_info": "Use /packages to see available packages\nUse /dashboard to check your usage\nUse /referral to get your referral link\nUse /help for more commands"
@@ -151,7 +151,7 @@
         "how_it_works": "📋 How it works:\n1. Share your referral link with friends\n2. When they join using your link, both of you get rewards\n3. Rewards are added automatically to your account",
         "rewards_info": "🎁 Rewards per referral:\n📝 +{text} text messages\n🖼️ +{image} image generations\n🎥 +{video} video generations",
         "share_referral_link": "📤 Share Referral Link",
-        "share_message": "Join this AI bot and get free credits! {referral_link}",
+    "share_message": "Hey everyone, I wanted to share something exciting with you! I recently discovered this incredible platform called Next Void. They believe in the power of uncensored and unfiltered AI, and they're on a mission to break down the barriers that big corporations often put up. Next Void provides free and unrestricted access to AI, which means we can explore and use AI in ways that were previously limited or blocked. It's all about giving us the freedom to innovate and create without constraints. Check them out and let me know what you think! #NextVoid #AIFreedom {referral_link}",
         "my_referrals": "📊 My Referrals",
         "no_referrals_message": "👥 **Your Referrals**\n\nYou haven't referred anyone yet. Share your referral link to start earning rewards!",
         "referrals_header": "👥 **Your Referrals** ({count} total)\n\n",
