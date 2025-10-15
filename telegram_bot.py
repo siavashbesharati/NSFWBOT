@@ -1640,8 +1640,19 @@ Use /packages to buy more credits!
             # Get bot token from database or config
             bot_token = self.db.get_setting('bot_token', Config.BOT_TOKEN)
             
-            # Create application
-            self.app = Application.builder().token(bot_token).build()
+            # Create application with optimized HTTP client settings
+            from telegram.request import HTTPXRequest
+            
+            # Create HTTP client with proper timeouts for production
+            request = HTTPXRequest(
+                connection_pool_size=20,      # Connection pool size
+                read_timeout=30.0,            # Read timeout
+                write_timeout=30.0,           # Write timeout
+                connect_timeout=30.0,         # Connection timeout
+                pool_timeout=30.0             # Pool timeout
+            )
+            
+            self.app = Application.builder().token(bot_token).request(request).build()
             
             # Add handlers
             self.app.add_handler(CommandHandler("start", self.start_command))
@@ -1691,12 +1702,7 @@ Use /packages to buy more credits!
                 poll_interval=1.0,                    # Check for updates every 1 second
                 timeout=30,                          # Timeout for each poll request
                 drop_pending_updates=True,           # Ignore old updates on restart (prevents spam)
-                allowed_updates=Update.ALL_TYPES,    # Accept all update types
-                read_timeout=30,                     # Socket read timeout
-                write_timeout=30,                    # Socket write timeout
-                connect_timeout=30,                  # Connection timeout
-                pool_timeout=30,                     # Connection pool timeout
-                bootstrap_retries=5                  # Retry connection on startup
+                allowed_updates=Update.ALL_TYPES     # Accept all update types
             )
             
         except Exception as e:
