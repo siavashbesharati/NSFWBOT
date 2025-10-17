@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 class TranslationManager:
     """
@@ -100,6 +100,61 @@ class TranslationManager:
     def is_supported_language(self, lang_code: str) -> bool:
         """Check if a language code is supported"""
         return lang_code in self.SUPPORTED_LANGUAGES
+
+    def get_characters(self, lang_code: str = None) -> List[Dict[str, Any]]:
+        """Return list of character definitions for the given language."""
+        if lang_code is None:
+            lang_code = self.DEFAULT_LANGUAGE
+
+        characters = self._get_character_section(lang_code)
+        if not characters and lang_code != self.DEFAULT_LANGUAGE:
+            characters = self._get_character_section(self.DEFAULT_LANGUAGE)
+
+        result: List[Dict[str, Any]] = []
+        if isinstance(characters, dict):
+            for key, value in characters.items():
+                if isinstance(value, dict):
+                    item = {
+                        'key': key,
+                        'slug': value.get('slug') or key,
+                        'name': value.get('name', ''),
+                        'description': value.get('description', ''),
+                        'instruction': value.get('instruction') or value.get('description', '')
+                    }
+                    result.append(item)
+        elif isinstance(characters, list):
+            for entry in characters:
+                if isinstance(entry, dict):
+                    item = {
+                        'key': entry.get('key') or entry.get('slug'),
+                        'slug': entry.get('slug') or entry.get('key'),
+                        'name': entry.get('name', ''),
+                        'description': entry.get('description', ''),
+                        'instruction': entry.get('instruction') or entry.get('description', '')
+                    }
+                    result.append(item)
+        return result
+
+    def get_character_by_slug(self, slug: str, lang_code: str = None) -> Optional[Dict[str, Any]]:
+        """Get a specific character by slug for the given language."""
+        if not slug:
+            return None
+
+        lang_code = lang_code or self.DEFAULT_LANGUAGE
+        for character in self.get_characters(lang_code):
+            if character.get('slug') == slug:
+                return character
+
+        if lang_code != self.DEFAULT_LANGUAGE:
+            for character in self.get_characters(self.DEFAULT_LANGUAGE):
+                if character.get('slug') == slug:
+                    return character
+        return None
+
+    def _get_character_section(self, lang_code: str) -> Any:
+        """Internal helper to fetch raw character section for a language."""
+        translations = self.translations.get(lang_code, {})
+        return translations.get('characters') if isinstance(translations, dict) else None
     
     def get_language_selection_keyboard_data(self) -> list:
         """Get keyboard data for language selection"""

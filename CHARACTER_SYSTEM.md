@@ -1,167 +1,69 @@
 # Character System Implementation
 
 ## Overview
-The character system allows users to select AI personalities that define how the bot responds. Each character has a unique instruction (system prompt) that guides the AI's behavior.
+The character system lets every user pick an AI persona that defines the bot's tone and behavior. Character metadata now lives entirely in the translation files, keeping localization and personality content in a single place.
 
-## Features Implemented
+## Key Concepts
 
-### 1. Database Schema
-- **characters table**: Stores character definitions
-  - `id`: Primary key
-  - `name`: Character name
-  - `description`: Short description
-  - `instruction`: System prompt for AI
-  - `is_active`: Visibility flag
-  - `created_date`, `updated_date`: Timestamps
+### Translation-Driven Characters
+- Characters are defined under the `characters` section inside each `languages/<code>.json` file.
+- Every entry contains:
+   - `slug`: Stable identifier stored in the database
+   - `name`: Display name (localized)
+   - `description`: Short blurb shown to the user (localized)
+   - `instruction`: System prompt fed to the AI (authored in English for consistency)
+- Example (`languages/en.json`):
 
-- **users table**: Added `character_id` column to track user's selected character
-
-### 2. Admin Dashboard
-**New Pages:**
-- `/characters` - List all characters
-- `/characters/create` - Create new character
-- `/characters/edit/<id>` - Edit existing character
-- `/characters/delete/<id>` - Delete/deactivate character
-
-**Features:**
-- CRUD operations for characters
-- Live preview when creating/editing
-- Automatic deactivation if users are using the character
-- Glass-style UI matching existing design
-
-### 3. Bot Integration
-
-**User Flow:**
-1. User runs `/start`
-2. Selects language
-3. **NEW**: Chooses AI character with glass buttons
-4. Bot stores selection and shows welcome message
-
-**Character Selection:**
-- Displays all active characters in 2-column grid
-- Shows character name with 🎭 emoji
-- After selection, confirms with character details
-
-**Message Handling:**
-- Before processing any message, checks if user has selected a character
-- If no character: Shows prompt to select one
-- If character selected: Passes character's instruction as system prompt to AI
-- Logs character usage in activity tracking
-
-**Character Command:**
-- `/character` or menu button shows current character
-- Allows changing character anytime
-- Available in main glass menu
-
-### 4. AI Handler Updates
-Modified `generate_text_response()` to accept `system_instruction` parameter:
-- Venice AI: Adds system message at start of conversation
-- Standard OpenAI: Also supports system messages
-- Character instruction sent with every AI request
-
-### 5. Internationalization
-Added translations in all 7 languages (en, es, fa, ar, ru, tr, zh):
 ```json
-{
-  "character": {
-    "select_title": "🎭 Choose Your AI Character",
-    "select_subtitle": "Select a character that matches your style:",
-    "selected": "✅ You selected: **{name}**\n\n{description}...",
-    "change_character": "🎭 Change Character",
-    "no_character_selected": "⚠️ **Please select a character first!**...",
-    "current_character": "🎭 **Current Character:**\n**{name}**..."
-  }
+"characters": {
+   "damon": {
+      "slug": "JNE7fgU",
+      "name": "Damon Black",
+      "description": "Damon is the reckless bad boy—cocky, daring, and always ready to drag you deeper into the fire.",
+      "instruction": "You are Damon Black, the user's dangerous bad boy fantasy..."
+   }
 }
 ```
 
-### 6. Default Characters
-Four default characters created on first database initialization:
-1. **Friendly Assistant** - Helpful and warm
-2. **Professional Expert** - Formal and authoritative
-3. **Creative Writer** - Imaginative storyteller
-4. **Casual Friend** - Relaxed conversational style
+### Database Storage
+- Only the selected `character_slug` is stored per user (`users.character_slug`).
+- No character tables remain in the database, simplifying migrations and edits.
 
-## Database Methods Added
+### Admin Dashboard
+- `/characters` now renders a read-only matrix of characters and their translations.
+- Create/Edit/Delete routes redirect with guidance to update the JSON files directly.
 
-```python
-# Character CRUD
-db.get_characters(active_only=True)
-db.get_character(character_id)
-db.create_character(name, description, instruction, is_active)
-db.update_character(character_id, ...)
-db.delete_character(character_id)
+### Bot Flow
+1. User runs `/start` and picks a language.
+2. Character choices are pulled from the selected language (defaulting to English if missing).
+3. Selected slug is written to the `users` table.
+4. For each AI request, the bot loads the English instruction for that slug and passes it as the system prompt.
 
-# User-Character relationship
-db.set_user_character(user_id, character_id)
-db.get_user_character(user_id)
-```
+### AI Handler
+- `generate_text_response()` continues to accept `system_instruction`.
+- The Telegram bot retrieves the instruction from the translation manager (English fallback) and forwards it unchanged.
 
-## Files Modified
+## Default Characters
+| Slug     | Name         | Persona Snapshot |
+|----------|--------------|------------------|
+| JNE7fgU  | Damon Black  | Reckless bad boy with seductive bravado |
+| R0brqCi  | Lucy Ember   | Magnetic bad girl who owns every interaction |
 
-1. **database.py**
-   - Added characters table schema
-   - Added character_id to users table
-   - Created character management methods
-   - Added default characters insertion
+## Code Touchpoints
+- **translations.py**: Provides `get_characters()` and `get_character_by_slug()` helpers that surface localized metadata plus English instructions.
+- **telegram_bot.py**: Uses translation manager for selection menus, stores slugs, and injects instructions into AI calls.
+- **database.py**: Adds `character_slug` column plus getter/setter helpers.
+- **admin_dashboard.py** & `templates/characters.html`: Read-only preview of translation-managed characters.
 
-2. **admin_dashboard.py**
-   - Added character routes (list, create, edit, delete)
-   - Integrated with existing admin authentication
-
-3. **templates/**
-   - `base.html` - Added Characters menu item
-   - `characters.html` - Character list view
-   - `create_character.html` - Character creation form
-   - `edit_character.html` - Character editing form
-
-4. **telegram_bot.py**
-   - Modified language selection flow to show character selection
-   - Added character selection handler
-   - Created character command
-   - Added character check in message handling
-   - Updated glass menu with character button
-   - Added character to menu callback map
-
-5. **ai_handler.py**
-   - Updated `generate_text_response()` with system_instruction param
-   - Modified Venice and standard OpenAI requests to use system messages
-
-6. **languages/*.json**
-   - Added character section to all 7 language files
-
-## Usage
-
-### Admin
-1. Go to admin dashboard → Characters
-2. Create new characters with custom instructions
-3. Edit/deactivate characters as needed
-4. Characters with active users can't be deleted (only deactivated)
-
-### Users
-1. Start bot and select language
-2. Choose preferred character from list
-3. All AI responses follow that character's personality
-4. Change character anytime via menu or `/character` command
-5. Can't send messages without selecting a character
-
-## Technical Notes
-
-- Character instructions are system prompts sent to AI with every request
-- Character selection is mandatory before using the bot
-- Activity logging tracks which character users interact with
-- Glass-style buttons maintain UI consistency
-- Full i18n support across all languages
-- Database migrations handle existing installations
+## Editing Workflow
+1. Update every `languages/<code>.json` file with matching `slug` entries.
+2. Keep `instruction` authored in English so the AI receives a consistent system prompt.
+3. Restart the bot (or reload translations) to pick up changes.
 
 ## Testing Checklist
-
-- [ ] Create character in admin dashboard
-- [ ] Edit character instruction
-- [ ] Deactivate/activate character
-- [ ] New user selects character after language
-- [ ] User sends message (uses character instruction)
-- [ ] User changes character via menu
-- [ ] Attempt to send message without character
-- [ ] Check activity logs include character info
-- [ ] Test in all supported languages
-- [ ] Verify character deleted if users assigned (should deactivate)
+- [ ] Start flow: language selection followed by character selection.
+- [ ] Character confirmation message shows localized name/description.
+- [ ] Sending text uses the expected system instruction (verify via AI response or logs).
+- [ ] `/character` menu reflects stored slug and description.
+- [ ] Admin `/characters` view lists both Damon and Lucy across languages.
+- [ ] Updating a translation file changes the bot output after reload.

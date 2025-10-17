@@ -35,6 +35,30 @@ class TelegramBot:
         self.payment_handler = PaymentHandler(self.db)
         self.app = None
 
+    def _get_characters_for_language(self, lang_code: str) -> list:
+        characters = translation_manager.get_characters(lang_code)
+        if not characters:
+            characters = translation_manager.get_characters()
+        return characters
+
+    def _get_character_by_slug(self, slug: str, lang_code: str) -> Optional[Dict[str, Any]]:
+        character = translation_manager.get_character_by_slug(slug, lang_code)
+        if not character and lang_code != translation_manager.DEFAULT_LANGUAGE:
+            character = translation_manager.get_character_by_slug(slug, translation_manager.DEFAULT_LANGUAGE)
+        return character
+
+    def _get_character_instruction(self, slug: str) -> str:
+        profile = translation_manager.get_character_by_slug(slug, translation_manager.DEFAULT_LANGUAGE)
+        if profile:
+            instruction = profile.get('instruction') or profile.get('description')
+            if instruction:
+                return instruction
+
+        localized = translation_manager.get_character_by_slug(slug)
+        if localized:
+            return localized.get('instruction') or localized.get('description', '')
+        return ''
+
     def _build_welcome_message(
         self,
         first_name: Optional[str],
@@ -419,7 +443,7 @@ class TelegramBot:
 
     async def show_character_selection(self, query, lang_code, context: ContextTypes.DEFAULT_TYPE):
         """Show character selection with glass-style buttons"""
-        characters = self.db.get_characters(active_only=True)
+        characters = self._get_characters_for_language(lang_code)
         
         if not characters:
             # No characters available, skip to welcome
@@ -442,8 +466,8 @@ class TelegramBot:
         row = []
         for idx, char in enumerate(characters):
             button = InlineKeyboardButton(
-                f"🎭 {char['name']}",
-                callback_data=f"select_character_{char['id']}"
+                f"🎭 {char.get('name', 'Character')}",
+                callback_data=f"select_character_{char.get('slug')}"
             )
             row.append(button)
             
@@ -462,15 +486,15 @@ class TelegramBot:
         user_id = query.from_user.id
         user_lang = self.db.get_user_language(user_id)
         
-        character_id = int(query.data.replace("select_character_", ""))
-        character = self.db.get_character(character_id)
+        character_slug = query.data.replace("select_character_", "").strip()
+        character = self._get_character_by_slug(character_slug, user_lang)
         
         if not character:
             await query.edit_message_text(get_text('general.error', user_lang))
             return
         
         # Set user's character
-        self.db.set_user_character(user_id, character_id)
+        self.db.set_user_character_slug(user_id, character.get('slug'))
         
         # Build confirmation message
         confirmation = get_text('character.selected', user_lang).format(
@@ -1013,7 +1037,8 @@ Use /packages to buy more credits!
             await self.show_character_selection(query, user_lang, context)
         else:
             # Regular command
-            current_character = self.db.get_user_character(user_id)
+            current_slug = self.db.get_user_character_slug(user_id)
+            current_character = self._get_character_by_slug(current_slug, user_lang) if current_slug else None
             
             if current_character:
                 # Show current character info
@@ -1164,8 +1189,10 @@ Use /packages to buy more credits!
             return
         
         # Check if user has selected a character
-        user_character = self.db.get_user_character(user_id)
-        if not user_character:
+        character_slug = self.db.get_user_character_slug(user_id)
+        character_profile = self._get_character_by_slug(character_slug, user_lang) if character_slug else None
+
+        if not character_slug or not character_profile:
             # User hasn't selected a character yet
             no_char_msg = get_text('character.no_character_selected', user_lang)
             keyboard = [[InlineKeyboardButton(
@@ -1175,6 +1202,11 @@ Use /packages to buy more credits!
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(no_char_msg, reply_markup=reply_markup, parse_mode='Markdown')
             return
+
+        character_name = character_profile.get('name', character_slug)
+        instruction_text = self._get_character_instruction(character_slug)
+        if not instruction_text:
+            instruction_text = character_profile.get('description', '')
         
         # Update user activity
         self.db.update_user_activity(user_id)
@@ -1183,8 +1215,8 @@ Use /packages to buy more credits!
         self.db.log_user_activity(user_id, 'ai_interaction', {
             'action': 'sent_text_message',
             'message_length': len(user_message),
-            'character_id': user_character['id'],
-            'character_name': user_character['name'],
+            'character_slug': character_slug,
+            'character_name': character_name,
             'has_conversation_memory': self.db.get_setting('enable_conversation_memory', 'true') == 'true'
         })
         
@@ -1211,7 +1243,7 @@ Use /packages to buy more credits!
             ai_response = await self.ai_handler.generate_text_response(
                 user_message, 
                 conversation_history=conversation_history,
-                system_instruction=user_character['instruction']
+                system_instruction=instruction_text or None
             )
             
             # Get Venice API metadata for auditing
@@ -1240,6 +1272,20 @@ Use /packages to buy more credits!
         """Handle image messages"""
         user_id = update.effective_user.id
         user_lang = get_user_language(user_id, self.db)
+        character_slug = self.db.get_user_character_slug(user_id)
+        character_profile = self._get_character_by_slug(character_slug, user_lang) if character_slug else None
+        
+        if not character_slug or not character_profile:
+            no_char_msg = get_text('character.no_character_selected', user_lang)
+            keyboard = [[InlineKeyboardButton(
+                get_text('character.change_character', user_lang),
+                callback_data="cmd_character"
+            )]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(no_char_msg, reply_markup=reply_markup, parse_mode='Markdown')
+            return
+        
+        character_name = character_profile.get('name', character_slug)
         
         # Check if bot is running
         if not self.db.get_setting('bot_running', 'true') == 'true':
@@ -1252,7 +1298,9 @@ Use /packages to buy more credits!
         # Log user activity for image message
         self.db.log_user_activity(user_id, 'ai_interaction', {
             'action': 'sent_image_message',
-            'has_caption': update.message.caption is not None
+            'has_caption': update.message.caption is not None,
+            'character_slug': character_slug,
+            'character_name': character_name
         })
         
         # Check if user has credits
@@ -1317,6 +1365,20 @@ Use /packages to buy more credits!
         """Handle video messages"""
         user_id = update.effective_user.id
         user_lang = get_user_language(user_id, self.db)
+        character_slug = self.db.get_user_character_slug(user_id)
+        character_profile = self._get_character_by_slug(character_slug, user_lang) if character_slug else None
+        
+        if not character_slug or not character_profile:
+            no_char_msg = get_text('character.no_character_selected', user_lang)
+            keyboard = [[InlineKeyboardButton(
+                get_text('character.change_character', user_lang),
+                callback_data="cmd_character"
+            )]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(no_char_msg, reply_markup=reply_markup, parse_mode='Markdown')
+            return
+        
+        character_name = character_profile.get('name', character_slug)
         
         # Check if bot is running
         if not self.db.get_setting('bot_running', 'true') == 'true':
@@ -1329,7 +1391,9 @@ Use /packages to buy more credits!
         # Log user activity for video message
         self.db.log_user_activity(user_id, 'ai_interaction', {
             'action': 'sent_video_message',
-            'has_caption': update.message.caption is not None
+            'has_caption': update.message.caption is not None,
+            'character_slug': character_slug,
+            'character_name': character_name
         })
         
         # Check if user has credits

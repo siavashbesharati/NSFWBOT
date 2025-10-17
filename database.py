@@ -36,143 +36,37 @@ class Database:
         if db_path is None:
             # Use environment variable or default relative to application
             env_path = os.getenv('DATABASE_PATH')
-            db_path = env_path if env_path else _default_db_path()
+            self.db_path = env_path if env_path else _default_db_path()
         else:
-            db_path = str(Path(db_path).expanduser().resolve())
-        
-        # Ensure directory exists
-        db_dir = os.path.dirname(db_path)
-        if db_dir and not os.path.exists(db_dir):
-            os.makedirs(db_dir, exist_ok=True)
-        
-        self.db_path = db_path
-        self.connection_pool = []
-        self.pool_size = 5  # Keep 5 connections ready
-        self.init_database()
-    
+            self.db_path = db_path
+
+        db_directory = Path(self.db_path).parent
+        if db_directory and not db_directory.exists():
+            db_directory.mkdir(parents=True, exist_ok=True)
+
+        self._initialize_database()
+
     def get_connection(self):
-        """Get database connection with optimized settings for production"""
-        import threading
-        
-        # Simple connection pooling for better performance
-        if self.connection_pool and len(self.connection_pool) > 0:
-            try:
-                conn = self.connection_pool.pop()
-                # Test if connection is still valid
-                conn.execute('SELECT 1')
-                return conn
-            except:
-                # Connection is dead, create new one
-                pass
-        
-        # Create new connection with optimized settings
-        conn = sqlite3.connect(self.db_path, timeout=30.0)
-        
-        # Enable WAL mode for better concurrency and reliability
-        conn.execute('PRAGMA journal_mode=WAL')
-        conn.execute('PRAGMA synchronous=NORMAL')  # Good balance of speed vs safety
-        conn.execute('PRAGMA cache_size=-64000')   # 64MB cache
-        conn.execute('PRAGMA temp_store=MEMORY')    # Store temp tables in memory
-        conn.execute('PRAGMA mmap_size=268435456')  # 256MB memory map
-        
-        # Enable foreign keys
-        conn.execute('PRAGMA foreign_keys=ON')
-        
-        return conn
-    
-    def return_connection(self, conn):
-        """Return connection to pool if pool not full"""
-        if len(self.connection_pool) < self.pool_size:
-            try:
-                # Test connection before returning to pool
-                conn.execute('SELECT 1')
-                self.connection_pool.append(conn)
-            except:
-                # Connection is bad, don't return to pool
-                conn.close()
-        else:
-            conn.close()
-    
-    def health_check(self):
-        """Check database health and connectivity"""
-        try:
-            with self.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('SELECT COUNT(*) FROM users')
-                user_count = cursor.fetchone()[0]
-                cursor.execute('SELECT COUNT(*) FROM message_history')
-                message_count = cursor.fetchone()[0]
-                return {
-                    'status': 'healthy',
-                    'user_count': user_count,
-                    'message_count': message_count,
-                    'pool_size': len(self.connection_pool)
-                }
-        except Exception as e:
-            return {
-                'status': 'unhealthy',
-                'error': str(e)
-            }
-    
-    def get_db_connection(self):
-        """Context manager for database connections with automatic pooling"""
-        from contextlib import contextmanager
-        
-        @contextmanager
-        def connection_manager():
-            conn = self.get_connection()
-            try:
-                yield conn
-            finally:
-                self.return_connection(conn)
-        
-        return connection_manager()
-    
+        """Create a new database connection using the configured path."""
+        return sqlite3.connect(self.db_path)
+
     def init_database(self):
-        """Initialize all database tables"""
-        conn = self.get_connection()
+        """Backward-compatible entry point used by legacy callers."""
+        self._initialize_database()
+
+    def _initialize_database(self):
+        """Create required tables and ensure baseline data exists."""
+        conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
-        # Users table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                is_premium BOOLEAN DEFAULT FALSE,
-                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                free_messages_used INTEGER DEFAULT 0,
-                free_text_messages_used INTEGER DEFAULT 0,
-                free_image_messages_used INTEGER DEFAULT 0,
-                free_video_messages_used INTEGER DEFAULT 0,
-                text_messages_left INTEGER DEFAULT 0,
-                image_messages_left INTEGER DEFAULT 0,
-                video_messages_left INTEGER DEFAULT 0,
-                total_spent REAL DEFAULT 0.0
-            )
-        ''')
-        
-        # Add new columns if they don't exist (for existing databases)
-        try:
-            cursor.execute('ALTER TABLE users ADD COLUMN free_text_messages_used INTEGER DEFAULT 0')
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
-        try:
-            cursor.execute('ALTER TABLE users ADD COLUMN free_image_messages_used INTEGER DEFAULT 0')
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
-        try:
-            cursor.execute('ALTER TABLE users ADD COLUMN free_video_messages_used INTEGER DEFAULT 0')
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
+
         # Add language preference column
         try:
             cursor.execute('ALTER TABLE users ADD COLUMN language TEXT DEFAULT "en"')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        try:
+            cursor.execute('ALTER TABLE users ADD COLUMN character_slug TEXT')
         except sqlite3.OperationalError:
             pass  # Column already exists
         
@@ -354,30 +248,11 @@ class Database:
         except sqlite3.OperationalError:
             pass
         
-        # Characters table (AI personality/role)
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS characters (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                description TEXT,
-                instruction TEXT NOT NULL,
-                is_active BOOLEAN DEFAULT TRUE,
-                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Add character_id column to users table if it doesn't exist
-        try:
-            cursor.execute('ALTER TABLE users ADD COLUMN character_id INTEGER REFERENCES characters(id)')
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
         conn.commit()
-        conn.close()        # Insert default packages
+        conn.close()
+        # Insert default data
         self.insert_default_packages()
         self.insert_default_settings()
-        self.insert_default_characters()
     
     def insert_default_packages(self):
         """Insert default packages if none exist"""
@@ -463,44 +338,6 @@ class Database:
                 INSERT OR IGNORE INTO admin_settings (key, value)
                 VALUES (?, ?)
             ''', (key, value))
-        
-        conn.commit()
-        conn.close()
-    
-    def insert_default_characters(self):
-        """Insert default characters if none exist"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT COUNT(*) FROM characters")
-        if cursor.fetchone()[0] == 0:
-            default_characters = [
-                (
-                    "Friendly Assistant",
-                    "A helpful and friendly AI companion",
-                    "You are a friendly, helpful, and respectful AI assistant. You provide clear, informative responses while maintaining a warm and approachable tone."
-                ),
-                (
-                    "Professional Expert",
-                    "A knowledgeable professional consultant",
-                    "You are a professional expert with deep knowledge across various domains. You provide detailed, well-researched answers with a formal and authoritative tone."
-                ),
-                (
-                    "Creative Writer",
-                    "An imaginative storyteller and creative mind",
-                    "You are a creative writer with a vivid imagination. You craft engaging stories, provide creative solutions, and think outside the box while maintaining artistic flair."
-                ),
-                (
-                    "Casual Friend",
-                    "A laid-back conversational companion",
-                    "You are a casual, friendly companion who chats in a relaxed, conversational style. You use everyday language and emojis occasionally to keep things fun and engaging."
-                ),
-            ]
-            
-            cursor.executemany('''
-                INSERT INTO characters (name, description, instruction)
-                VALUES (?, ?, ?)
-            ''', default_characters)
         
         conn.commit()
         conn.close()
@@ -609,6 +446,28 @@ class Database:
         if user and 'language' in user and user['language']:
             return user['language']
         return 'en'  # Default to English
+
+    def set_user_character_slug(self, user_id: int, character_slug: Optional[str]) -> bool:
+        """Store the user's selected character slug"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            UPDATE users SET character_slug = ? WHERE user_id = ?
+        ''', (character_slug, user_id))
+
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+
+        return success
+
+    def get_user_character_slug(self, user_id: int) -> Optional[str]:
+        """Retrieve the stored character slug for a user"""
+        user = self.get_user(user_id)
+        if not user:
+            return None
+        return user.get('character_slug')
     
     def add_message_credits(self, user_id: int, text_count: int = 0, 
                            image_count: int = 0, video_count: int = 0):
@@ -1627,140 +1486,6 @@ class Database:
         
         return result is not None
     
-    # Character Management Methods
-    def get_characters(self, active_only: bool = True) -> List[Dict]:
-        """Get all characters"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        query = "SELECT * FROM characters"
-        if active_only:
-            query += " WHERE is_active = 1"
-        query += " ORDER BY created_date ASC"
-        
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        if not rows:
-            return []
-        
-        columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row)) for row in rows]
-    
-    def get_character(self, character_id: int) -> Optional[Dict]:
-        """Get a specific character by ID"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM characters WHERE id = ?", (character_id,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            columns = [desc[0] for desc in cursor.description]
-            return dict(zip(columns, row))
-        return None
-    
-    def create_character(self, name: str, description: str, instruction: str, is_active: bool = True) -> int:
-        """Create a new character and return its ID"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO characters (name, description, instruction, is_active)
-            VALUES (?, ?, ?, ?)
-        ''', (name, description, instruction, is_active))
-        
-        character_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return character_id
-    
-    def update_character(self, character_id: int, name: str = None, description: str = None, 
-                        instruction: str = None, is_active: bool = None) -> bool:
-        """Update an existing character"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        updates = []
-        params = []
-        
-        if name is not None:
-            updates.append("name = ?")
-            params.append(name)
-        if description is not None:
-            updates.append("description = ?")
-            params.append(description)
-        if instruction is not None:
-            updates.append("instruction = ?")
-            params.append(instruction)
-        if is_active is not None:
-            updates.append("is_active = ?")
-            params.append(is_active)
-        
-        if not updates:
-            conn.close()
-            return False
-        
-        updates.append("updated_date = ?")
-        params.append(datetime.now())
-        params.append(character_id)
-        
-        query = f"UPDATE characters SET {', '.join(updates)} WHERE id = ?"
-        cursor.execute(query, params)
-        
-        success = cursor.rowcount > 0
-        conn.commit()
-        conn.close()
-        
-        return success
-    
-    def delete_character(self, character_id: int) -> bool:
-        """Delete a character (or set as inactive)"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        # Check if any users are using this character
-        cursor.execute("SELECT COUNT(*) FROM users WHERE character_id = ?", (character_id,))
-        count = cursor.fetchone()[0]
-        
-        if count > 0:
-            # Don't delete, just deactivate
-            cursor.execute("UPDATE characters SET is_active = 0 WHERE id = ?", (character_id,))
-        else:
-            # Safe to delete
-            cursor.execute("DELETE FROM characters WHERE id = ?", (character_id,))
-        
-        success = cursor.rowcount > 0
-        conn.commit()
-        conn.close()
-        
-        return success
-    
-    def set_user_character(self, user_id: int, character_id: int) -> bool:
-        """Set a user's selected character"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            UPDATE users SET character_id = ? WHERE user_id = ?
-        ''', (character_id, user_id))
-        
-        success = cursor.rowcount > 0
-        conn.commit()
-        conn.close()
-        
-        return success
-    
-    def get_user_character(self, user_id: int) -> Optional[Dict]:
-        """Get the character selected by a user"""
-        user = self.get_user(user_id)
-        if not user or not user.get('character_id'):
-            return None
-        
-        return self.get_character(user['character_id'])
     
     # Activity Logging Methods
     def log_user_activity(self, user_id: int, activity_type: str, activity_data: dict):

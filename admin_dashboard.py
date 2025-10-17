@@ -4,6 +4,7 @@ from database import Database
 from currency_converter import currency_converter
 from ai_handler import OpenRouterAPI
 from financial_analytics import FinancialAnalytics
+from translations import translation_manager
 import json
 import os
 import sqlite3
@@ -351,64 +352,47 @@ def delete_package(package_id):
 @app.route('/characters')
 @login_required
 def characters():
-    """Display all characters"""
-    characters = db.get_characters(active_only=False)
-    return render_template('characters.html', characters=characters)
+    """Display translation-based characters across all languages"""
+    languages = translation_manager.get_available_languages()
+    default_language = translation_manager.DEFAULT_LANGUAGE
+    default_characters = translation_manager.get_characters(default_language)
+
+    character_entries = []
+    for character in default_characters:
+        slug = character.get('slug')
+        translations_by_language = {}
+
+        for lang_code in languages.keys():
+            translations_by_language[lang_code] = translation_manager.get_character_by_slug(slug, lang_code)
+
+        character_entries.append({
+            'slug': slug,
+            'translations': translations_by_language
+        })
+
+    return render_template(
+        'characters.html',
+        characters=character_entries,
+        languages=languages,
+        default_language=default_language
+    )
 
 @app.route('/characters/create', methods=['GET', 'POST'])
 @login_required
 def create_character():
-    """Create a new character"""
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        instruction = request.form['instruction']
-        is_active = 'is_active' in request.form
-        
-        character_id = db.create_character(name, description, instruction, is_active)
-        
-        if character_id:
-            flash('Character created successfully!')
-            return redirect(url_for('characters'))
-        else:
-            flash('Error creating character!')
-    
-    return render_template('create_character.html')
+    flash('Characters are now managed through translation files. Update the language JSON files to add new characters.')
+    return redirect(url_for('characters'))
 
-@app.route('/characters/edit/<int:character_id>', methods=['GET', 'POST'])
+@app.route('/characters/edit/<path:unused_slug>', methods=['GET', 'POST'])
 @login_required
-def edit_character(character_id):
-    """Edit an existing character"""
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        instruction = request.form['instruction']
-        is_active = 'is_active' in request.form
-        
-        success = db.update_character(character_id, name, description, instruction, is_active)
-        
-        if success:
-            flash('Character updated successfully!')
-            return redirect(url_for('characters'))
-        else:
-            flash('Error updating character!')
-    
-    character = db.get_character(character_id)
-    if not character:
-        flash('Character not found!')
-        return redirect(url_for('characters'))
-    
-    return render_template('edit_character.html', character=character)
+def edit_character(unused_slug):
+    flash('Characters are now managed through translation files. Update the language JSON files to modify characters.')
+    return redirect(url_for('characters'))
 
-@app.route('/characters/delete/<int:character_id>', methods=['POST'])
+@app.route('/characters/delete/<path:unused_slug>', methods=['POST'])
 @login_required
-def delete_character(character_id):
-    """Delete or deactivate a character"""
-    success = db.delete_character(character_id)
-    if success:
-        flash('Character deleted/deactivated successfully!')
-    else:
-        flash('Error deleting character!')
+def delete_character(unused_slug):
+    flash('Characters are now managed through translation files. Remove entries from language JSON files to delete characters.')
     return redirect(url_for('characters'))
 
 @app.route('/transactions')
