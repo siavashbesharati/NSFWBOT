@@ -62,7 +62,7 @@ class TranslationMiddleware:
     
     async def translate_to_english(self, text: str, source_language: str = 'auto') -> Tuple[str, str]:
         """
-        Translate text to English using Bing only
+        Translate text to English using Bing only with fallback
         Returns (translated_text, detected_language)
         """
         try:
@@ -89,16 +89,22 @@ class TranslationMiddleware:
             translation_time = time.time() - start_time
             print(f"✅ Bing translated to English in {translation_time:.2f}s")
             
-            return translated_text, source_language
+            # Validate translation result
+            if translated_text and len(translated_text.strip()) > 0:
+                return translated_text, source_language
+            else:
+                print(f"⚠️ Empty translation result, using original text")
+                return text, 'unknown'
             
         except Exception as e:
             print(f"❌ Bing translation to English failed: {e}")
+            print(f"🔄 Fallback: Using original text without translation")
             # Return original text if translation fails
             return text, 'unknown'
     
     async def translate_from_english(self, text: str, target_language: str) -> str:
         """
-        Translate text from English to target language using Bing only
+        Translate text from English to target language using Bing only with fallback
         """
         try:
             # If target is English, return as-is
@@ -124,10 +130,16 @@ class TranslationMiddleware:
             translation_time = time.time() - start_time
             print(f"✅ Bing translated to {target_language} in {translation_time:.2f}s")
             
-            return translated_text
+            # Validate translation result
+            if translated_text and len(translated_text.strip()) > 0:
+                return translated_text
+            else:
+                print(f"⚠️ Empty translation result, using original English text")
+                return text
             
         except Exception as e:
             print(f"❌ Bing translation from English failed: {e}")
+            print(f"🔄 Fallback: Using original English text without translation")
             # Return original text if translation fails
             return text
     
@@ -186,15 +198,33 @@ translation_middleware = TranslationMiddleware()
 
 async def translate_user_input(text: str, user_language: str) -> Tuple[str, str]:
     """
-    Translate user input to English
+    Translate user input to English with comprehensive fallback
     Returns (english_text, detected_language)
     """
-    target_lang_code = translation_middleware.get_language_code_for_user(user_language)
-    return await translation_middleware.translate_to_english(text, 'auto')
+    try:
+        target_lang_code = translation_middleware.get_language_code_for_user(user_language)
+        return await translation_middleware.translate_to_english(text, 'auto')
+    except ImportError as e:
+        print(f"❌ Translation module import error: {e}")
+        print(f"🔄 Fallback: Using original text without translation")
+        return text, 'unknown'
+    except Exception as e:
+        print(f"❌ Translation function error: {e}")
+        print(f"🔄 Fallback: Using original text without translation")
+        return text, 'unknown'
 
 async def translate_ai_response(text: str, target_language: str) -> str:
     """
-    Translate AI response from English to target language
+    Translate AI response from English to target language with comprehensive fallback
     """
-    target_lang_code = translation_middleware.get_language_code_for_user(target_language)
-    return await translation_middleware.translate_from_english(text, target_lang_code)
+    try:
+        target_lang_code = translation_middleware.get_language_code_for_user(target_language)
+        return await translation_middleware.translate_from_english(text, target_lang_code)
+    except ImportError as e:
+        print(f"❌ Translation module import error: {e}")
+        print(f"🔄 Fallback: Using original English text without translation")
+        return text
+    except Exception as e:
+        print(f"❌ Translation function error: {e}")
+        print(f"🔄 Fallback: Using original English text without translation")
+        return text

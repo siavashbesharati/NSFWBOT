@@ -69,8 +69,14 @@ class OpenRouterAPI:
         Returns dict with both original English and translated responses
         """
         try:
-            # Import translation middleware
-            from translation_middleware import translate_user_input, translate_ai_response
+            # Import translation middleware with fallback
+            try:
+                from translation_middleware import translate_user_input, translate_ai_response
+                translation_available = True
+            except ImportError as e:
+                print(f"⚠️ Translation middleware not available: {e}")
+                print(f"🔄 Continuing without translation - using English only")
+                translation_available = False
             
             # Refresh settings from database
             self.refresh_settings()
@@ -87,12 +93,24 @@ class OpenRouterAPI:
             
             # Step 1: Translate user input to English (if needed)
             print(f"🌐 Starting translation workflow for user language: {user_language}")
-            english_message, detected_language = await translate_user_input(user_message, user_language)
-            
-            print(f"📝 Translation Results:")
-            print(f"   Original: {user_message[:100]}..." if len(user_message) > 100 else f"   Original: {user_message}")
-            print(f"   English: {english_message[:100]}..." if len(english_message) > 100 else f"   English: {english_message}")
-            print(f"   Detected Language: {detected_language}")
+            if translation_available:
+                try:
+                    english_message, detected_language = await translate_user_input(user_message, user_language)
+                    
+                    print(f"📝 Translation Results:")
+                    print(f"   Original: {user_message[:100]}..." if len(user_message) > 100 else f"   Original: {user_message}")
+                    print(f"   English: {english_message[:100]}..." if len(english_message) > 100 else f"   English: {english_message}")
+                    print(f"   Detected Language: {detected_language}")
+                except Exception as e:
+                    print(f"❌ Translation middleware failed: {e}")
+                    print(f"🔄 Fallback: Using original message without translation")
+                    english_message = user_message
+                    detected_language = 'unknown'
+            else:
+                # Translation not available, use original message
+                print(f"⚠️ Translation middleware not available - using original message")
+                english_message = user_message
+                detected_language = 'en'
             
             # Debug logging
             print(f"🔍 AI API Configuration:")
@@ -113,9 +131,17 @@ class OpenRouterAPI:
             
             # Step 3: Translate AI response to user's language (if needed)
             translated_response = english_response
-            if user_language != 'en':
-                translated_response = await translate_ai_response(english_response, user_language)
-                print(f"🌐 AI Response (Translated): {translated_response[:100]}..." if len(translated_response) > 100 else f"🌐 AI Response (Translated): {translated_response}")
+            if user_language != 'en' and translation_available:
+                try:
+                    translated_response = await translate_ai_response(english_response, user_language)
+                    print(f"🌐 AI Response (Translated): {translated_response[:100]}..." if len(translated_response) > 100 else f"🌐 AI Response (Translated): {translated_response}")
+                except Exception as e:
+                    print(f"❌ AI response translation failed: {e}")
+                    print(f"🔄 Fallback: Using English response without translation")
+                    translated_response = english_response
+            elif user_language != 'en' and not translation_available:
+                print(f"⚠️ Translation middleware not available - returning English response")
+                translated_response = english_response
             
             return {
                 'translated_response': translated_response,
