@@ -190,11 +190,11 @@
         "ton_payment_pending_body": "❌ Платёж ещё не найден в блокчейне.\n\n**Убедитесь, что:**\n✅ Отправили ровно {amount} TON\n✅ Использовали правильный комментарий: `Payment_{transaction}`\n✅ Отправили на правильный адрес\n\n⏰ Появление транзакции в блокчейне может занять несколько минут."
     },
     "character": {
-        "select_title": "🎭 Choose Your AI Character",
-        "select_subtitle": "Select a character that matches your style:",
-        "selected": "✅ You selected: **{name}**\n\n{description}\n\nYou can change your character anytime from the menu!",
-        "change_character": "🎭 Change Character",
-        "no_character_selected": "⚠️ **Please select a character first!**\n\nUse /start to choose your AI character.",
-        "current_character": "🎭 **Current Character:**\n**{name}**\n{description}"
+        "select_title": "🎭 Выберите AI Персонажа",
+        "select_subtitle": "Выберите персонажа, который соответствует вашему стилю:",
+        "selected": "✅ Вы выбрали: **{name}**\n\n{description}\n\nВы можете изменить персонажа в любое время через меню!",
+        "change_character": "🎭 Сменить Персонажа",
+        "no_character_selected": "⚠️ **Пожалуйста, сначала выберите персонажа!**\n\nИспользуйте /start чтобы выбрать AI персонажа.",
+        "current_character": "🎭 **Текущий Персонаж:**\n**{name}**\n{description}"
     }
 }

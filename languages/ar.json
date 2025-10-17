@@ -190,11 +190,11 @@
         "ton_payment_pending_body": "❌ لم يتم العثور على الدفع على البلوك تشين بعد.\n\n**يرجى التأكد من أنك:**\n✅ أرسلت بالضبط {amount} TON\n✅ استخدمت التعليق الصحيح: `Payment_{transaction}`\n✅ أرسلت إلى عنوان المحفظة الصحيح\n\n⏰ قد يستغرق ظهور المعاملة على البلوك تشين بضع دقائق."
     },
     "character": {
-        "select_title": "🎭 Choose Your AI Character",
-        "select_subtitle": "Select a character that matches your style:",
-        "selected": "✅ You selected: **{name}**\n\n{description}\n\nYou can change your character anytime from the menu!",
-        "change_character": "🎭 Change Character",
-        "no_character_selected": "⚠️ **Please select a character first!**\n\nUse /start to choose your AI character.",
-        "current_character": "🎭 **Current Character:**\n**{name}**\n{description}"
+        "select_title": "🎭 اختر شخصية الذكاء الاصطناعي",
+        "select_subtitle": "اختر شخصية تتناسب مع أسلوبك:",
+        "selected": "✅ لقد اخترت: **{name}**\n\n{description}\n\nيمكنك تغيير شخصيتك في أي وقت من القائمة!",
+        "change_character": "🎭 تغيير الشخصية",
+        "no_character_selected": "⚠️ **الرجاء اختيار شخصية أولاً!**\n\nاستخدم /start لاختيار شخصية الذكاء الاصطناعي الخاصة بك.",
+        "current_character": "🎭 **الشخصية الحالية:**\n**{name}**\n{description}"
     }
 }

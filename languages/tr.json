@@ -190,11 +190,11 @@
         "ton_payment_pending_body": "❌ Ödeme henüz blok zincirinde bulunamadı.\n\n**Lütfen emin olun ki:**\n✅ Tam olarak {amount} TON gönderdiniz\n✅ Doğru açıklamayı kullandınız: `Payment_{transaction}`\n✅ Doğru cüzdan adresine gönderdiniz\n\n⏰ İşlemin blok zincirinde görünmesi birkaç dakika sürebilir."
     },
     "character": {
-        "select_title": "🎭 Choose Your AI Character",
-        "select_subtitle": "Select a character that matches your style:",
-        "selected": "✅ You selected: **{name}**\n\n{description}\n\nYou can change your character anytime from the menu!",
-        "change_character": "🎭 Change Character",
-        "no_character_selected": "⚠️ **Please select a character first!**\n\nUse /start to choose your AI character.",
-        "current_character": "🎭 **Current Character:**\n**{name}**\n{description}"
+        "select_title": "🎭 Yapay Zeka Karakterinizi Seçin",
+        "select_subtitle": "Tarzınıza uygun bir karakter seçin:",
+        "selected": "✅ Seçtiniz: **{name}**\n\n{description}\n\nKarakterinizi menüden istediğiniz zaman değiştirebilirsiniz!",
+        "change_character": "🎭 Karakter Değiştir",
+        "no_character_selected": "⚠️ **Lütfen önce bir karakter seçin!**\n\nYapay zeka karakterinizi seçmek için /start kullanın.",
+        "current_character": "🎭 **Mevcut Karakter:**\n**{name}**\n{description}"
     }
 }

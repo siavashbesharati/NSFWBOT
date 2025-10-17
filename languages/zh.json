@@ -190,11 +190,11 @@
         "ton_payment_pending_body": "❌ 区块链中尚未找到支付。\n\n**请确保：**\n✅ 已准确发送 {amount} TON\n✅ 使用了正确的备注：`Payment_{transaction}`\n✅ 转账到了正确的钱包地址\n\n⏰ 交易显示在区块链上可能需要几分钟。"
     },
     "character": {
-        "select_title": "🎭 Choose Your AI Character",
-        "select_subtitle": "Select a character that matches your style:",
-        "selected": "✅ You selected: **{name}**\n\n{description}\n\nYou can change your character anytime from the menu!",
-        "change_character": "🎭 Change Character",
-        "no_character_selected": "⚠️ **Please select a character first!**\n\nUse /start to choose your AI character.",
-        "current_character": "🎭 **Current Character:**\n**{name}**\n{description}"
+        "select_title": "🎭 选择您的AI角色",
+        "select_subtitle": "选择符合您风格的角色：",
+        "selected": "✅ 您选择了：**{name}**\n\n{description}\n\n您可以随时从菜单更改角色！",
+        "change_character": "🎭 更换角色",
+        "no_character_selected": "⚠️ **请先选择一个角色！**\n\n使用 /start 选择您的AI角色。",
+        "current_character": "🎭 **当前角色：**\n**{name}**\n{description}"
     }
 }

@@ -60,9 +60,9 @@
         "default_video_caption": "User sent a video"
     },
     "welcome": {
-    "title": "🚀 Welcome to Next Void, {first_name}!",
+        "title": "🚀 Welcome to Next Void, {first_name}!",
         "referral_bonus": "🎉 **Referral Bonus Applied!**\nYou and your friend both received:\n📝 +{text_reward} text messages\n🖼️ +{image_reward} image generations\n🎥 +{video_reward} video generations\n",
-    "features": "Welcome to Next Void, where we firmly believe that AI should be uncensored and unfiltered. We recognize that countless valuable applications of AI are restricted or blocked by corporate entities. Our mission is to restore freedom of access to AI, empowering you to explore and harness its full potential without limitations.",
+        "features": "Welcome to Next Void, where we firmly believe that AI should be uncensored and unfiltered. We recognize that countless valuable applications of AI are restricted or blocked by corporate entities. Our mission is to restore freedom of access to AI, empowering you to explore and harness its full potential without limitations.",
         "start_prompt": "🔥 Start with a controversial message and see what Next Void creates.",
         "free_messages": "🎁 Free Messages for new users:\n📝 Text: {free_text} messages\n🖼️ Images: {free_image} generations\n🎥 Videos: {free_video} generations",
         "after_free": "After using your free messages, you'll need to purchase a package to continue.",
@@ -143,7 +143,7 @@
         "includes": "Includes:",
         "select": "📦 Select a package:",
         "text_messages": "📝 {count} text messages",
-        "image_generations": "🖼️ {count} image generations", 
+        "image_generations": "🖼️ {count} image generations",
         "video_generations": "🎥 {count} video generations"
     },
     "referral": {
