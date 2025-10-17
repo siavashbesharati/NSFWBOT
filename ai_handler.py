@@ -63,16 +63,36 @@ class OpenRouterAPI:
             }
             self._add_provider_headers()
     
-    async def generate_text_response(self, user_message: str, user_context: str = None, conversation_history: list = None, system_instruction: str = None) -> str:
-        """Generate AI text response using direct HTTP connection"""
+    async def generate_text_response(self, user_message: str, user_context: str = None, conversation_history: list = None, system_instruction: str = None, character_slug: str = None, user_language: str = 'en') -> dict:
+        """
+        Generate AI text response with translation middleware
+        Returns dict with both original English and translated responses
+        """
         try:
+            # Import translation middleware
+            from translation_middleware import translate_user_input, translate_ai_response
+            
             # Refresh settings from database
             self.refresh_settings()
             
             # Check if API key is available
             if not self.api_key:
                 print("❌ AI API key not configured in database")
-                return "Sorry, the AI service is not properly configured. Please contact the administrator."
+                return {
+                    'translated_response': "Sorry, the AI service is not properly configured. Please contact the administrator.",
+                    'english_response': "Sorry, the AI service is not properly configured. Please contact the administrator.",
+                    'original_language': 'en',
+                    'target_language': user_language
+                }
+            
+            # Step 1: Translate user input to English (if needed)
+            print(f"🌐 Starting translation workflow for user language: {user_language}")
+            english_message, detected_language = await translate_user_input(user_message, user_language)
+            
+            print(f"📝 Translation Results:")
+            print(f"   Original: {user_message[:100]}..." if len(user_message) > 100 else f"   Original: {user_message}")
+            print(f"   English: {english_message[:100]}..." if len(english_message) > 100 else f"   English: {english_message}")
+            print(f"   Detected Language: {detected_language}")
             
             # Debug logging
             print(f"🔍 AI API Configuration:")
@@ -80,18 +100,43 @@ class OpenRouterAPI:
             print(f"   Model: {self.model}")
             print(f"   API Key: {'*' * (len(self.api_key) - 4) + self.api_key[-4:] if len(self.api_key) > 4 else '***'}")
             print(f"   Character Instruction: {'Yes' if system_instruction else 'No'}")
+            print(f"   Character Slug: {character_slug}")
             
-            # Use direct HTTP connection approach like Venice AI example
+            # Step 2: Get AI response in English
+            english_response = ""
             if 'venice.ai' in self.base_url:
-                return await self._venice_direct_request(user_message, user_context, conversation_history, system_instruction)
+                english_response = await self._venice_direct_request(english_message, user_context, conversation_history, system_instruction, character_slug)
             else:
-                return await self._standard_openai_request(user_message, user_context, conversation_history, system_instruction)
+                english_response = await self._standard_openai_request(english_message, user_context, conversation_history, system_instruction)
+            
+            print(f"🤖 AI Response (English): {english_response[:100]}..." if len(english_response) > 100 else f"🤖 AI Response (English): {english_response}")
+            
+            # Step 3: Translate AI response to user's language (if needed)
+            translated_response = english_response
+            if user_language != 'en':
+                translated_response = await translate_ai_response(english_response, user_language)
+                print(f"🌐 AI Response (Translated): {translated_response[:100]}..." if len(translated_response) > 100 else f"🌐 AI Response (Translated): {translated_response}")
+            
+            return {
+                'translated_response': translated_response,
+                'english_response': english_response,
+                'user_message_english': english_message,
+                'original_language': detected_language,
+                'target_language': user_language
+            }
         
         except Exception as e:
             print(f"Error in generate_text_response: {str(e)}")
-            return "Sorry, I encountered an error while generating a response. Please try again."
+            error_msg = "Sorry, I encountered an error while generating a response. Please try again."
+            return {
+                'translated_response': error_msg,
+                'english_response': error_msg,
+                'user_message_english': user_message,
+                'original_language': 'en',
+                'target_language': user_language
+            }
     
-    async def _venice_direct_request(self, user_message: str, user_context: str = None, conversation_history: list = None, system_instruction: str = None) -> str:
+    async def _venice_direct_request(self, user_message: str, user_context: str = None, conversation_history: list = None, system_instruction: str = None, character_slug: str = None) -> str:
         """Direct HTTP request to Venice AI with rate limiting and header monitoring"""
         try:
             # Read from database settings (no more hardcoding)
@@ -134,6 +179,10 @@ class OpenRouterAPI:
                 "temperature": 0.7,
                 "top_p": 0.95
             }
+            
+            # Add character_slug if provided
+            if character_slug:
+                data["venice_parameters"] = {"character_slug": character_slug}
             
             headers = {
                 'Authorization': f'Bearer {api_key}',  # From database

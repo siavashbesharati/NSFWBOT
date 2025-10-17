@@ -178,6 +178,27 @@ class Database:
         except sqlite3.OperationalError:
             pass
         
+        # Add translation columns
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN original_language TEXT')  # Detected/source language
+        except sqlite3.OperationalError:
+            pass
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN user_message_english TEXT')  # User message in English
+        except sqlite3.OperationalError:
+            pass
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN bot_response_english TEXT')  # AI response in English
+        except sqlite3.OperationalError:
+            pass
+        
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN target_language TEXT')  # User's selected language
+        except sqlite3.OperationalError:
+            pass
+        
         # Admin settings table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS admin_settings (
@@ -1127,7 +1148,7 @@ class Database:
                 'output_tokens': completion_tokens or 0
             }
 
-    def save_message_history(self, user_id, message_type, user_message, bot_response, ai_model=None, tokens_used=0, cost=0.0, context_length=0, venice_metadata=None):
+    def save_message_history(self, user_id, message_type, user_message, bot_response, ai_model=None, tokens_used=0, cost=0.0, context_length=0, venice_metadata=None, original_language=None, user_message_english=None, bot_response_english=None, target_language=None):
         """Save message and response to history with optional Venice metadata"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -1156,8 +1177,9 @@ class Database:
                 INSERT INTO message_history 
                 (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length,
                  completion_tokens, prompt_tokens, total_tokens, response_id, finish_reason, response_created,
-                 venice_parameters, full_response_json, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 venice_parameters, full_response_json, original_language, user_message_english, 
+                 bot_response_english, target_language, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ''', (
                 user_id, message_type, user_message, bot_response, ai_model, tokens_used, calculated_cost, context_length,
                 completion_tokens,
@@ -1167,15 +1189,21 @@ class Database:
                 choice.get('finish_reason'),
                 venice_metadata.get('created', 0),
                 json.dumps(venice_params),
-                json.dumps(venice_metadata)
+                json.dumps(venice_metadata),
+                original_language,
+                user_message_english,
+                bot_response_english,
+                target_language
             ))
         else:
             # Fallback for non-Venice responses
             cursor.execute('''
                 INSERT INTO message_history 
-                (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length))
+                (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length,
+                 original_language, user_message_english, bot_response_english, target_language, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length,
+                  original_language, user_message_english, bot_response_english, target_language))
         
         conn.commit()
         conn.close()

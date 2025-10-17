@@ -17,7 +17,7 @@ The character system lets every user pick an AI persona that defines the bot's t
 ```json
 "characters": {
    "damon": {
-      "slug": "JNE7fgU",
+      "slug": "damon",
       "name": "Damon Black",
       "description": "Damon is the reckless bad boy—cocky, daring, and always ready to drag you deeper into the fire.",
       "instruction": "You are Damon Black, the user's dangerous bad boy fantasy..."
@@ -46,8 +46,8 @@ The character system lets every user pick an AI persona that defines the bot's t
 ## Default Characters
 | Slug     | Name         | Persona Snapshot |
 |----------|--------------|------------------|
-| JNE7fgU  | Damon Black  | Reckless bad boy with seductive bravado |
-| R0brqCi  | Lucy Ember   | Magnetic bad girl who owns every interaction |
+| damon  | Damon Black  | Reckless bad boy with seductive bravado |
+| lucy-4  | Lucy Ember   | Magnetic bad girl who owns every interaction |
 
 ## Code Touchpoints
 - **translations.py**: Provides `get_characters()` and `get_character_by_slug()` helpers that surface localized metadata plus English instructions.

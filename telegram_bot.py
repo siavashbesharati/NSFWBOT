@@ -368,6 +368,11 @@ class TelegramBot:
         })()
         await self.language_command(fake_update, context)
 
+    async def character_command_callback(self, query, context, user_lang):
+        """Handle character command from glass menu callback"""
+        await query.answer()
+        await self.show_character_selection(query, user_lang, context)
+
     async def enter_referral_command_callback(self, query, context, user_lang):
         """Handle enter referral command from glass menu callback"""
         fake_update = type('Update', (), {
@@ -515,7 +520,7 @@ class TelegramBot:
             await query.message.reply_text(welcome_message)
             context.user_data.pop('after_character_selection', None)
         
-        await self.show_glass_menu(query.message.chat.id, user_lang, context)
+        # await self.show_glass_menu(query.message.chat.id, user_lang, context)
 
     async def show_glass_menu(self, chat_id, user_lang, context: ContextTypes.DEFAULT_TYPE, message_text=None):
         """Helper method to show the glass-style interactive menu"""
@@ -718,6 +723,8 @@ class TelegramBot:
                     await self.referral_command_callback(query, context, user_lang)
                 elif callback_data == "cmd_language":
                     await self.language_command_callback(query, context, user_lang)
+                elif callback_data == "cmd_character":
+                    await self.character_command_callback(query, context, user_lang)
                 elif callback_data == "cmd_testapi":
                     await self.test_api_command_callback(query, context, user_lang)
                 elif callback_data == "cmd_venicestatus":
@@ -1054,13 +1061,14 @@ Use /packages to buy more credits!
                 await update.message.reply_text(char_msg, reply_markup=reply_markup, parse_mode='Markdown')
             else:
                 # No character selected, show selection
-                await update.message.reply_text(get_text('character.select_title', user_lang))
                 # Create a fake query object to reuse the selection method
                 class FakeQuery:
                     def __init__(self, message):
                         self.message = message
                     async def edit_message_text(self, text, reply_markup=None):
                         await self.message.reply_text(text, reply_markup=reply_markup)
+                    async def answer(self):
+                        return None
                 
                 fake_query = FakeQuery(update.message)
                 await self.show_character_selection(fake_query, user_lang, context)
@@ -1239,30 +1247,43 @@ Use /packages to buy more credits!
                 history_length = int(self.db.get_setting('conversation_history_length', '10'))
                 conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
             
-            # Generate AI response with context and character instruction
-            ai_response = await self.ai_handler.generate_text_response(
+            # Generate AI response with translation middleware
+            ai_response_data = await self.ai_handler.generate_text_response(
                 user_message, 
                 conversation_history=conversation_history,
-                system_instruction=instruction_text or None
+                system_instruction=instruction_text or None,
+                character_slug=character_slug,
+                user_language=user_lang
             )
+            
+            # Extract responses
+            translated_response = ai_response_data['translated_response']
+            english_response = ai_response_data['english_response']
+            user_message_english = ai_response_data['user_message_english']
+            original_language = ai_response_data['original_language']
+            target_language = ai_response_data['target_language']
             
             # Get Venice API metadata for auditing
             venice_metadata = self.ai_handler.get_last_response_metadata()
             
-            # Save to message history with AI model info and Venice metadata
+            # Save to message history with translation data
             ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
             self.db.save_message_history(
                 user_id, 
                 'text', 
-                user_message, 
-                ai_response,
+                user_message,  # Original user message in their language
+                translated_response,  # Bot response in user's language
                 ai_model=ai_model,
                 context_length=len(conversation_history),
-                venice_metadata=venice_metadata
+                venice_metadata=venice_metadata,
+                original_language=original_language,
+                user_message_english=user_message_english,
+                bot_response_english=english_response,
+                target_language=target_language
             )
             
-            # Send response
-            await update.message.reply_text(ai_response)
+            # Send translated response to user
+            await update.message.reply_text(translated_response)
             
         except Exception as e:
             logger.error(f"Error handling text message: {str(e)}")
@@ -1272,179 +1293,22 @@ Use /packages to buy more credits!
         """Handle image messages"""
         user_id = update.effective_user.id
         user_lang = get_user_language(user_id, self.db)
-        character_slug = self.db.get_user_character_slug(user_id)
-        character_profile = self._get_character_by_slug(character_slug, user_lang) if character_slug else None
         
-        if not character_slug or not character_profile:
-            no_char_msg = get_text('character.no_character_selected', user_lang)
-            keyboard = [[InlineKeyboardButton(
-                get_text('character.change_character', user_lang),
-                callback_data="cmd_character"
-            )]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.message.reply_text(no_char_msg, reply_markup=reply_markup, parse_mode='Markdown')
-            return
-        
-        character_name = character_profile.get('name', character_slug)
-        
-        # Check if bot is running
-        if not self.db.get_setting('bot_running', 'true') == 'true':
-            await update.message.reply_text(get_text('general.bot_offline', user_lang))
-            return
-        
-        # Update user activity
-        self.db.update_user_activity(user_id)
-        
-        # Log user activity for image message
-        self.db.log_user_activity(user_id, 'ai_interaction', {
-            'action': 'sent_image_message',
-            'has_caption': update.message.caption is not None,
-            'character_slug': character_slug,
-            'character_name': character_name
-        })
-        
-        # Check if user has credits
-        if not self.db.use_message_credit(user_id, 'image'):
-            await update.message.reply_text(get_text('credits.not_enough_image', user_lang))
-            await update.message.reply_text(get_text('credits.get_more', user_lang))
-            return
-        
-        # Show typing indicator
-        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-        
-        try:
-            # Get the largest photo
-            photo = update.message.photo[-1]
-            
-            # Download the image
-            file = await context.bot.get_file(photo.file_id)
-            image_data = await file.download_as_bytearray()
-            
-            # Get caption if any
-            caption = update.message.caption or get_text('media.default_image_caption', user_lang)
-            
-            # Check if conversation memory is enabled
-            memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
-            conversation_history = []
-            
-            if memory_enabled:
-                # Get configurable conversation history length
-                history_length = int(self.db.get_setting('conversation_history_length', '10'))
-                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
-            
-            # Generate AI response with context
-            ai_response = await self.ai_handler.generate_image_response(
-                caption, 
-                bytes(image_data),
-                conversation_history=conversation_history
-            )
-            
-            # Get Venice API metadata for auditing
-            venice_metadata = self.ai_handler.get_last_response_metadata()
-            
-            # Save to message history with AI model info and Venice metadata
-            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
-            self.db.save_message_history(
-                user_id, 
-                'image', 
-                caption, 
-                ai_response,
-                ai_model=ai_model,
-                context_length=len(conversation_history),
-                venice_metadata=venice_metadata
-            )
-            
-            # Send response
-            await update.message.reply_text(ai_response)
-            
-        except Exception as e:
-            logger.error(f"Error handling image message: {str(e)}")
-            await update.message.reply_text(get_text('errors.image_processing_error', user_lang))
+        await update.message.reply_text("For now we are only processing text messages.")
     
     async def handle_video_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle video messages"""
         user_id = update.effective_user.id
         user_lang = get_user_language(user_id, self.db)
-        character_slug = self.db.get_user_character_slug(user_id)
-        character_profile = self._get_character_by_slug(character_slug, user_lang) if character_slug else None
         
-        if not character_slug or not character_profile:
-            no_char_msg = get_text('character.no_character_selected', user_lang)
-            keyboard = [[InlineKeyboardButton(
-                get_text('character.change_character', user_lang),
-                callback_data="cmd_character"
-            )]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.message.reply_text(no_char_msg, reply_markup=reply_markup, parse_mode='Markdown')
-            return
+        await update.message.reply_text("For now we are only processing text messages.")
+    
+    async def handle_document_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle document messages"""
+        user_id = update.effective_user.id
+        user_lang = get_user_language(user_id, self.db)
         
-        character_name = character_profile.get('name', character_slug)
-        
-        # Check if bot is running
-        if not self.db.get_setting('bot_running', 'true') == 'true':
-            await update.message.reply_text(get_text('general.bot_offline', user_lang))
-            return
-        
-        # Update user activity
-        self.db.update_user_activity(user_id)
-        
-        # Log user activity for video message
-        self.db.log_user_activity(user_id, 'ai_interaction', {
-            'action': 'sent_video_message',
-            'has_caption': update.message.caption is not None,
-            'character_slug': character_slug,
-            'character_name': character_name
-        })
-        
-        # Check if user has credits
-        if not self.db.use_message_credit(user_id, 'video'):
-            await update.message.reply_text(get_text('credits.not_enough_video', user_lang))
-            await update.message.reply_text(get_text('credits.get_more', user_lang))
-            return
-        
-        # Show typing indicator
-        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-        
-        try:
-            # Get caption if any
-            caption = update.message.caption or get_text('media.default_video_caption', user_lang)
-            
-            # Check if conversation memory is enabled
-            memory_enabled = self.db.get_setting('enable_conversation_memory', 'true') == 'true'
-            conversation_history = []
-            
-            if memory_enabled:
-                # Get configurable conversation history length
-                history_length = int(self.db.get_setting('conversation_history_length', '10'))
-                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
-            
-            # Generate AI response with context
-            ai_response = await self.ai_handler.generate_video_response(
-                caption,
-                conversation_history=conversation_history
-            )
-            
-            # Get Venice API metadata for auditing
-            venice_metadata = self.ai_handler.get_last_response_metadata()
-            
-            # Save to message history with AI model info and Venice metadata
-            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
-            self.db.save_message_history(
-                user_id, 
-                'video', 
-                caption, 
-                ai_response,
-                ai_model=ai_model,
-                context_length=len(conversation_history),
-                venice_metadata=venice_metadata
-            )
-            
-            # Send response
-            await update.message.reply_text(ai_response)
-            
-        except Exception as e:
-            logger.error(f"Error handling video message: {str(e)}")
-            await update.message.reply_text(get_text('errors.video_processing_error', user_lang))
+        await update.message.reply_text("For now we are only processing text messages.")
     
     async def handle_callback_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle callback queries from inline keyboards"""
@@ -2001,6 +1865,7 @@ Use /packages to buy more credits!
             self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
             self.app.add_handler(MessageHandler(filters.PHOTO, self.handle_image_message))
             self.app.add_handler(MessageHandler(filters.VIDEO, self.handle_video_message))
+            self.app.add_handler(MessageHandler(filters.Document.ALL, self.handle_document_message))
             
             # Payment handlers
             self.app.add_handler(PreCheckoutQueryHandler(self.handle_pre_checkout_query))
