@@ -86,6 +86,73 @@ python start_bot.py dashboard-only
 Open http://127.0.0.1:5000 in your browser
 - Default login: `admin` / `admin123`
 
+## 🚂 Deploy on Railway (Step-by-Step)
+
+### 1. Prepare repository
+1. Push this project to GitHub.
+2. Make sure these files are present in root:
+   - `Dockerfile`
+   - `Procfile`
+   - `requirements.txt`
+   - `start_bot.py`
+
+### 2. Create Railway project
+1. Go to [railway.app](https://railway.app/) and sign in.
+2. Click **New Project**.
+3. Choose **Deploy from GitHub repo**.
+4. Select your repository.
+
+### 3. Configure service variables
+In Railway, open your service and set these environment variables:
+
+```env
+BOT_TOKEN=your_telegram_bot_token
+VENICE_INFERENCE_KEY=your_venice_inference_key
+AI_API_KEY=your_venice_inference_key
+AI_MODEL=venice-uncensored
+AI_BASE_URL=https://api.venice.ai/api/v1
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change_me
+SECRET_KEY=change_me_to_a_random_secret
+DATABASE_PATH=/app/data/bot_database.db
+```
+
+Notes:
+- Railway automatically provides `PORT`; the app now binds to it automatically.
+- `AI_API_KEY` is kept for compatibility with existing DB settings.
+
+### 4. Configure start command
+- If Railway detects `Procfile`, no extra command is needed.
+- Manual start command (if needed): `python start_bot.py start`
+
+### 5. Add persistent storage (recommended)
+1. Add a Railway volume and mount it to `/app/data`.
+2. Keep `DATABASE_PATH=/app/data/bot_database.db`.
+
+Without a volume, SQLite data may be lost after redeploy/restart.
+
+### 6. Deploy
+1. Trigger a deploy from Railway dashboard (or push a commit).
+2. Wait for logs to show:
+   - Telegram bot started
+   - Admin dashboard started
+
+### 7. Open dashboard
+1. Copy your Railway service URL.
+2. Open it in browser.
+3. Log in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
+
+### 8. Verify Telegram bot
+1. Open Telegram and send `/start` to your bot.
+2. Confirm it replies.
+3. In dashboard, check users/messages are updating.
+
+### 9. Optional: production hardening
+- Change default admin credentials.
+- Use a strong `SECRET_KEY`.
+- Disable simulation mode in dashboard.
+- Consider migrating from SQLite to Postgres for higher reliability.
+
 ## 🧰 Building a Standalone Executable
 
 1. (Optional) Activate your virtual environment.
