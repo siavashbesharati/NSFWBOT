@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ai_handler import OpenRouterAPI
+from ai_handler import VeniceAPI
 import asyncio
 
 async def test_venice_integration():
@@ -15,7 +15,7 @@ async def test_venice_integration():
     print("🧪 Testing Venice AI Integration...")
     
     # Initialize AI handler
-    ai_handler = OpenRouterAPI()
+    ai_handler = VeniceAPI()
     
     # Test 1: Basic Venice API request
     print("\n1️⃣ Testing basic Venice API request...")

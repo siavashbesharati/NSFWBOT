@@ -61,10 +61,9 @@ class Config:
     def get_ai_models(cls):
         """Get list of available AI models"""
         return [
-            'openai/gpt-3.5-turbo',
-            'openai/gpt-4',
-            'anthropic/claude-3-haiku',
-            'anthropic/claude-3-sonnet',
-            'google/gemini-pro',
-            'mistralai/mistral-7b-instruct'
+            'venice-uncensored',
+            'llama-3.3-70b',
+            'llama-3.2-3b',
+            'qwen-2.5-72b-instruct',
+            'mistral-31-24b'
         ]

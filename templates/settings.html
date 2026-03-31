@@ -59,24 +59,24 @@
                     <input type="password" class="form-control" id="ai_api_key" name="ai_api_key" 
                            value="{{ settings.get('ai_api_key', '') }}" 
                            placeholder="Enter your AI API key">
-                    <div class="form-text">API key for your AI service (OpenRouter, Venice AI, etc.)</div>
+                    <div class="form-text">Venice Inference API key</div>
                 </div>
                 
                 <div class="mb-3">
                     <label for="ai_base_url" class="form-label">AI Base URL</label>
                     <input type="url" class="form-control" id="ai_base_url" name="ai_base_url" 
-                           value="{{ settings.get('ai_base_url', 'https://openrouter.ai/api/v1') }}" 
+                           value="{{ settings.get('ai_base_url', 'https://api.venice.ai/api/v1') }}" 
                            placeholder="https://api.venice.ai/api/v1">
-                    <div class="form-text">Base URL for AI API (e.g., https://api.venice.ai/api/v1, https://openrouter.ai/api/v1)</div>
+                    <div class="form-text">Base URL for Venice API (recommended: https://api.venice.ai/api/v1)</div>
                 </div>
                 
                 <div class="mb-3">
                     <label for="ai_model" class="form-label">AI Model</label>
                     <input type="text" class="form-control" id="ai_model" name="ai_model" 
-                           value="{{ settings.get('ai_model', 'openai/gpt-3.5-turbo') }}" 
+                           value="{{ settings.get('ai_model', 'venice-uncensored') }}" 
                            placeholder="venice-uncensored">
                     <div class="form-text">
-                        Enter the AI model name (e.g., venice-uncensored, openai/gpt-4, anthropic/claude-3-haiku)
+                        Enter the Venice model name (e.g., venice-uncensored)
                     </div>
                 </div>
                 

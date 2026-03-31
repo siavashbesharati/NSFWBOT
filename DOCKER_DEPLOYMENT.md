@@ -64,8 +64,8 @@ SECRET_KEY=your_secure_secret_key_here
 DATABASE_PATH=/app/data/bot_database.db
 
 # API Keys
-OPENROUTER_API_KEY=your_openrouter_api_key
-VENICE_API_KEY=your_venice_api_key
+VENICE_INFERENCE_KEY=your_venice_inference_key
+AI_API_KEY=your_venice_inference_key
 
 # Financial Settings
 TON_PRICE_USD=2.50

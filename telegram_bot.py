@@ -16,7 +16,7 @@ from telegram.ext import (
 )
 
 from database import Database
-from ai_handler import OpenRouterAPI
+from ai_handler import VeniceAPI
 from payment_handler import PaymentHandler
 from config import Config
 from translations import get_text, get_user_language, set_user_language, translation_manager
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
     def __init__(self):
         self.db = Database()
-        self.ai_handler = OpenRouterAPI(database=self.db)
+        self.ai_handler = VeniceAPI(database=self.db)
         self.payment_handler = PaymentHandler(self.db)
         self.app = None
 
@@ -1218,7 +1218,7 @@ Use /packages to buy more credits!
             venice_metadata = self.ai_handler.get_last_response_metadata()
             
             # Save to message history with AI model info and Venice metadata
-            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            ai_model = self.db.get_setting('ai_model', 'venice-uncensored')
             self.db.save_message_history(
                 user_id, 
                 'text', 
@@ -1295,7 +1295,7 @@ Use /packages to buy more credits!
             venice_metadata = self.ai_handler.get_last_response_metadata()
             
             # Save to message history with AI model info and Venice metadata
-            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            ai_model = self.db.get_setting('ai_model', 'venice-uncensored')
             self.db.save_message_history(
                 user_id, 
                 'image', 
@@ -1364,7 +1364,7 @@ Use /packages to buy more credits!
             venice_metadata = self.ai_handler.get_last_response_metadata()
             
             # Save to message history with AI model info and Venice metadata
-            ai_model = self.db.get_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+            ai_model = self.db.get_setting('ai_model', 'venice-uncensored')
             self.db.save_message_history(
                 user_id, 
                 'video', 

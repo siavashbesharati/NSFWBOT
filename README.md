@@ -5,7 +5,7 @@ A comprehensive Telegram bot with AI responses, payment processing, and admin da
 ## ✨ Features
 
 ### 🤖 AI Integration
-- **OpenRouter API**: Support for multiple AI models (GPT-4, Claude, Gemini, etc.)
+- **Venice API**: AI responses through Venice chat completions
 - **Dynamic Model Selection**: Admin can choose from 100+ available models
 - **Multi-modal Support**: Text, image, and video processing
 - **Configurable Responses**: Customizable AI behavior and prompts
@@ -42,7 +42,7 @@ A comprehensive Telegram bot with AI responses, payment processing, and admin da
 ### 1. Prerequisites
 - Python 3.8+
 - Telegram Bot Token (from @BotFather)
-- OpenRouter API Key (from openrouter.ai)
+- Venice Inference Key (from venice.ai)
 
 ### 2. Installation
 
@@ -107,12 +107,12 @@ Notes:
 3. Follow instructions to create your bot
 4. Copy the bot token
 
-### Step 2: Get OpenRouter API Key
+### Step 2: Get Venice Inference Key
 
-1. Go to https://openrouter.ai/
+1. Go to https://venice.ai/
 2. Sign up for an account
-3. Navigate to API Keys
-4. Create a new API key
+3. Navigate to API keys / inference keys
+4. Create a new inference key
 5. Copy the key
 
 ### Step 3: Configuration Options
@@ -120,7 +120,7 @@ Notes:
 #### Required Settings
 ```env
 BOT_TOKEN=your_bot_token_here
-OPENROUTER_API_KEY=your_openrouter_key_here
+VENICE_INFERENCE_KEY=your_venice_inference_key_here
 ```
 
 #### Payment Settings (Optional)
@@ -434,7 +434,7 @@ If you encounter issues:
 
 This project is created for educational and commercial use. Make sure to:
 - Comply with Telegram's Terms of Service
-- Follow OpenRouter's usage guidelines
+- Follow Venice's usage guidelines
 - Respect user privacy and data protection laws
 - Implement proper security measures for production use
 

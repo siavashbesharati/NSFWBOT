@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from werkzeug.security import check_password_hash, generate_password_hash
 from database import Database
 from currency_converter import currency_converter
-from ai_handler import OpenRouterAPI
+from ai_handler import VeniceAPI
 from financial_analytics import FinancialAnalytics
 import json
 import os
@@ -118,43 +118,17 @@ def login_required(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
-def fetch_openrouter_models():
-    """Fetch available models from OpenRouter API"""
+def fetch_venice_models():
+    """Return a curated Venice model list for dashboard selector."""
     try:
-        url = "https://openrouter.ai/api/v1/models"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code == 200:
-            data = response.json()
-            models = []
-            
-            for model in data.get('data', []):
-                models.append({
-                    'id': model.get('id', ''),
-                    'name': model.get('name', ''),
-                    'description': model.get('description', ''),
-                    'context_length': model.get('context_length', 0),
-                    'pricing': model.get('pricing', {}),
-                    'input_modalities': model.get('architecture', {}).get('input_modalities', []),
-                    'output_modalities': model.get('architecture', {}).get('output_modalities', [])
-                })
-            
-            return {
-                'success': True,
-                'models': models,
-                'total': len(models)
-            }
-        else:
-            return {
-                'success': False,
-                'error': f'API returned status code: {response.status_code}'
-            }
-            
-    except requests.RequestException as e:
-        return {
-            'success': False,
-            'error': f'Request failed: {str(e)}'
-        }
+        models = [
+            {"id": "venice-uncensored", "name": "venice-uncensored", "description": "Default Venice chat model"},
+            {"id": "llama-3.3-70b", "name": "llama-3.3-70b", "description": "Llama 3.3 70B"},
+            {"id": "llama-3.2-3b", "name": "llama-3.2-3b", "description": "Llama 3.2 3B"},
+            {"id": "qwen-2.5-72b-instruct", "name": "qwen-2.5-72b-instruct", "description": "Qwen 2.5 72B Instruct"},
+            {"id": "mistral-31-24b", "name": "mistral-31-24b", "description": "Mistral 24B"},
+        ]
+        return {"success": True, "models": models, "total": len(models)}
     except Exception as e:
         return {
             'success': False,
@@ -854,18 +828,18 @@ def message_history_detail(message_id: int):
         selected_message=message
     )
 
-@app.route('/api/openrouter/models')
+@app.route('/api/venice/models')
 @login_required
-def get_openrouter_models():
-    """API endpoint to fetch available OpenRouter models"""
-    result = fetch_openrouter_models()
+def get_venice_models():
+    """API endpoint to fetch available Venice models"""
+    result = fetch_venice_models()
     return jsonify(result)
 
 def get_venice_api_status():
     """Get Venice API status information"""
     try:
         # Initialize AI handler
-        ai_handler = OpenRouterAPI(db)
+        ai_handler = VeniceAPI(db)
         
         # Get Venice account status using the existing method
         loop = asyncio.new_event_loop()
@@ -1320,8 +1294,8 @@ if __name__ == '__main__':
     # Create default admin settings if they don't exist
     if not db.get_setting('bot_token'):
         db.update_setting('bot_token', '')
-        db.update_setting('openrouter_api_key', '')
-        db.update_setting('openrouter_model', 'openai/gpt-3.5-turbo')
+        db.update_setting('venice_inference_key', '')
+        db.update_setting('ai_model', 'venice-uncensored')
         db.update_setting('ton_wallet', '')
         db.update_setting('webhook_url', '')
         db.update_setting('bot_active', 'false')

@@ -15,8 +15,8 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
       - AI_API_KEY=${AI_API_KEY}
+      - VENICE_INFERENCE_KEY=${VENICE_INFERENCE_KEY}
       - TON_WALLET=${TON_WALLET}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     env_file:
       - .env.production
     restart: unless-stopped

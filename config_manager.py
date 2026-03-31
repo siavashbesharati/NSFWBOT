@@ -31,9 +31,8 @@ class ConfigManager:
         'TON_NETWORK_MODE': 'ton_network_mode',
         'WEBHOOK_URL': 'webhook_url',
         'AI_API_KEY': 'ai_api_key',
-        'OPENROUTER_API_KEY': 'openrouter_api_key',
+        'VENICE_INFERENCE_KEY': 'venice_inference_key',
         'AI_MODEL': 'ai_model',
-        'OPENROUTER_MODEL': 'openrouter_model',
         'AI_BASE_URL': 'ai_base_url',
         'DASHBOARD_HOST': 'dashboard_host',
         'DASHBOARD_PORT': 'dashboard_port',
@@ -57,7 +56,7 @@ class ConfigManager:
     SENSITIVE_KEYS = {
         'bot_token',
         'ai_api_key',
-        'openrouter_api_key',
+        'venice_inference_key',
         'admin_password',
         'secret_key',
         'ton_api_key',
@@ -99,24 +98,23 @@ class ConfigManager:
         self.set_config('ADMIN_CHAT_ID', admin_id)
 
         print("\n🧠 AI Configuration")
-        api_key = input("Enter your OpenRouter/Venice API Key: ").strip()
+        api_key = input("Enter your Venice Inference Key: ").strip()
         if api_key:
             self.set_config('AI_API_KEY', api_key)
-            self.set_config('OPENROUTER_API_KEY', api_key)
+            self.set_config('VENICE_INFERENCE_KEY', api_key)
 
         models = Config.get_ai_models()
         print("\nAvailable AI Models:")
         for idx, model in enumerate(models, 1):
             print(f" {idx}. {model}")
-        choice = input("Choose AI model (1-6, default 1): ").strip()
+        choice = input(f"Choose AI model (1-{len(models)}, default 1): ").strip()
         try:
             selected_model = models[int(choice) - 1]
         except (ValueError, IndexError):
             selected_model = models[0]
         self.set_config('AI_MODEL', selected_model)
-        self.set_config('OPENROUTER_MODEL', selected_model)
 
-        base_url = input("API Base URL (default https://openrouter.ai/api/v1): ").strip() or 'https://openrouter.ai/api/v1'
+        base_url = input("API Base URL (default https://api.venice.ai/api/v1): ").strip() or 'https://api.venice.ai/api/v1'
         self.set_config('AI_BASE_URL', base_url)
 
         print("\n💰 Payment Configuration")
@@ -160,8 +158,8 @@ class ConfigManager:
         errors = []
         if not self.config.get('bot_token'):
             errors.append('bot_token is missing')
-        if not self.config.get('ai_api_key') and not self.config.get('openrouter_api_key'):
-            errors.append('AI API key is missing')
+        if not self.config.get('ai_api_key') and not self.config.get('venice_inference_key'):
+            errors.append('Venice inference key is missing')
 
         if errors:
             print("❌ Configuration Errors:")

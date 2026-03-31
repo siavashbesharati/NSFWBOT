@@ -17,7 +17,7 @@ def print_banner():
 ===============================
     
 This script will help you set up your Telegram bot with:
-✅ AI responses (OpenRouter)
+✅ AI responses (Venice AI)
 ✅ Payment system (TON & Stars)  
 ✅ Admin dashboard
 ✅ User management

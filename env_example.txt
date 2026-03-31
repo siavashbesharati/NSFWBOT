@@ -38,7 +38,7 @@ SECRET_KEY=your-super-secret-key-change-this-in-production
 # The following settings are now managed through the web admin dashboard:
 #
 # ✅ AI Configuration:
-#   - OpenRouter API Key
+#   - Venice Inference Key
 #   - AI Model Selection
 #
 # ✅ Payment Settings:
