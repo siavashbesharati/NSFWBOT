@@ -456,6 +456,32 @@ class TelegramBot:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(message, reply_markup=reply_markup)
 
+    async def _generate_character_greeting(self, character_id: int) -> str:
+        """Generate a greeting message from the selected character"""
+        try:
+            character = self.db.get_character(character_id)
+            if not character:
+                return "Welcome! I'm ready to chat with you."
+            
+            # Construct a prompt asking the character to introduce itself
+            intro_prompt = (
+                f"Greet the user who just selected you as their character. "
+                f"Be warm, engaging, and stay true to your character. "
+                f"Keep the greeting concise (2-3 sentences max) and welcoming. "
+                f"Start directly with the greeting without any introduction like 'As [character name]'."
+            )
+            
+            # Generate the greeting using the AI handler
+            greeting = await self.ai_handler.generate_text_response(
+                user_message=intro_prompt,
+                system_instruction=character.get('instruction', '')
+            )
+            
+            return greeting if greeting else "Welcome! I'm ready to chat with you."
+        except Exception as e:
+            logger.error(f"Error generating character greeting: {str(e)}")
+            return "Welcome! I'm ready to chat with you."
+
     async def handle_character_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle character selection callback"""
         query = update.callback_query
@@ -481,6 +507,10 @@ class TelegramBot:
         )
         
         await query.edit_message_text(confirmation, parse_mode='Markdown')
+        
+        # Generate and send character greeting
+        greeting = await self._generate_character_greeting(character_id)
+        await query.message.reply_text(f"🎭 **{character['name']}**: {greeting}", parse_mode='Markdown')
         
         # Show welcome message and menu
         after_context = context.user_data.get('after_character_selection', {})
