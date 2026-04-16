@@ -456,22 +456,33 @@ class TelegramBot:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(message, reply_markup=reply_markup)
 
-    async def _generate_character_greeting(self, character_id: int) -> str:
+    async def _generate_character_greeting(self, character_id: int, is_initial_selection: bool = True) -> str:
         """Generate a greeting message from the selected character"""
         try:
             character = self.db.get_character(character_id)
             if not character:
                 return "Welcome! I'm ready to chat with you."
             
-            # Construct a prompt asking the character to introduce itself
-            intro_prompt = (
-                f"Greet the user who just selected you as their character. "
-                f"Be warm, engaging, and stay true to your character. "
-                f"Keep the greeting concise (2-3 sentences max) and welcoming. "
-                f"Start directly with the greeting without any introduction like 'As [character name]'."
-            )
+            if is_initial_selection:
+                # First time selecting a character
+                intro_prompt = (
+                    f"You are {character['name']}. {character['description']}. "
+                    f"The user has just selected you as their AI companion for the first time. "
+                    f"Greet them warmly and introduce yourself in a way that reflects your personality and role. "
+                    f"Keep your greeting concise (2-3 sentences max) and engaging. "
+                    f"Stay in character throughout your response."
+                )
+            else:
+                # User is changing to this character
+                intro_prompt = (
+                    f"You are {character['name']}. {character['description']}. "
+                    f"The user has chosen to switch to you as their AI companion. "
+                    f"Greet them warmly and acknowledge that they've selected you, showing enthusiasm about chatting with them. "
+                    f"Keep your greeting concise (2-3 sentences max) and engaging. "
+                    f"Stay in character throughout your response."
+                )
             
-            # Generate the greeting using the AI handler
+            # Generate the greeting using the AI handler with the character's system instruction
             greeting = await self.ai_handler.generate_text_response(
                 user_message=intro_prompt,
                 system_instruction=character.get('instruction', '')
@@ -509,7 +520,8 @@ class TelegramBot:
         await query.edit_message_text(confirmation, parse_mode='Markdown')
         
         # Generate and send character greeting
-        greeting = await self._generate_character_greeting(character_id)
+        is_initial = bool(context.user_data.get('after_character_selection'))
+        greeting = await self._generate_character_greeting(character_id, is_initial)
         await query.message.reply_text(f"🎭 **{character['name']}**: {greeting}", parse_mode='Markdown')
         
         # Show welcome message and menu
