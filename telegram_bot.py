@@ -639,7 +639,15 @@ class TelegramBot:
                 )
             ])
             
-            # Row 3: Help & Language
+            # Row 3: Change Character
+            keyboard.append([
+                InlineKeyboardButton(
+                    get_text('character.change_character', user_lang),
+                    callback_data="cmd_character"
+                )
+            ])
+
+            # Row 4: Help & Language
             keyboard.append([
                 InlineKeyboardButton(
                     get_text('commands.help', user_lang), 
@@ -651,7 +659,7 @@ class TelegramBot:
                 )
             ])
             
-            # Row 4: Admin commands (only for admins)
+            # Row 5: Admin commands (only for admins)
             admin_chat_id = self.db.get_setting('admin_chat_id', '0')
             try:
                 admin_id = int(admin_chat_id) if admin_chat_id else 0
@@ -1205,7 +1213,11 @@ Use /packages to buy more credits!
             if memory_enabled:
                 # Get configurable conversation history length
                 history_length = int(self.db.get_setting('conversation_history_length', '10'))
-                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+                conversation_history = self.db.get_conversation_history(
+                    user_id,
+                    character_id=user_character['id'],
+                    limit=history_length
+                )
             
             # Generate AI response with context and character instruction
             ai_response = await self.ai_handler.generate_text_response(
@@ -1226,7 +1238,8 @@ Use /packages to buy more credits!
                 ai_response,
                 ai_model=ai_model,
                 context_length=len(conversation_history),
-                venice_metadata=venice_metadata
+                venice_metadata=venice_metadata,
+                character_id=user_character['id']
             )
             
             # Send response
@@ -1248,6 +1261,16 @@ Use /packages to buy more credits!
         
         # Update user activity
         self.db.update_user_activity(user_id)
+
+        user_character = self.db.get_user_character(user_id)
+        if not user_character:
+            no_char_msg = get_text('character.no_character_selected', user_lang)
+            keyboard = [[InlineKeyboardButton(
+                get_text('character.change_character', user_lang),
+                callback_data="cmd_character"
+            )]]
+            await update.message.reply_text(no_char_msg, reply_markup=InlineKeyboardMarkup(keyboard))
+            return
         
         # Log user activity for image message
         self.db.log_user_activity(user_id, 'ai_interaction', {
@@ -1282,7 +1305,11 @@ Use /packages to buy more credits!
             if memory_enabled:
                 # Get configurable conversation history length
                 history_length = int(self.db.get_setting('conversation_history_length', '10'))
-                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+                conversation_history = self.db.get_conversation_history(
+                    user_id,
+                    character_id=user_character['id'],
+                    limit=history_length
+                )
             
             # Generate AI response with context
             ai_response = await self.ai_handler.generate_image_response(
@@ -1303,7 +1330,8 @@ Use /packages to buy more credits!
                 ai_response,
                 ai_model=ai_model,
                 context_length=len(conversation_history),
-                venice_metadata=venice_metadata
+                venice_metadata=venice_metadata,
+                character_id=user_character['id']
             )
             
             # Send response
@@ -1325,6 +1353,16 @@ Use /packages to buy more credits!
         
         # Update user activity
         self.db.update_user_activity(user_id)
+
+        user_character = self.db.get_user_character(user_id)
+        if not user_character:
+            no_char_msg = get_text('character.no_character_selected', user_lang)
+            keyboard = [[InlineKeyboardButton(
+                get_text('character.change_character', user_lang),
+                callback_data="cmd_character"
+            )]]
+            await update.message.reply_text(no_char_msg, reply_markup=InlineKeyboardMarkup(keyboard))
+            return
         
         # Log user activity for video message
         self.db.log_user_activity(user_id, 'ai_interaction', {
@@ -1352,7 +1390,11 @@ Use /packages to buy more credits!
             if memory_enabled:
                 # Get configurable conversation history length
                 history_length = int(self.db.get_setting('conversation_history_length', '10'))
-                conversation_history = self.db.get_conversation_history(user_id, limit=history_length)
+                conversation_history = self.db.get_conversation_history(
+                    user_id,
+                    character_id=user_character['id'],
+                    limit=history_length
+                )
             
             # Generate AI response with context
             ai_response = await self.ai_handler.generate_video_response(
@@ -1372,7 +1414,8 @@ Use /packages to buy more credits!
                 ai_response,
                 ai_model=ai_model,
                 context_length=len(conversation_history),
-                venice_metadata=venice_metadata
+                venice_metadata=venice_metadata,
+                character_id=user_character['id']
             )
             
             # Send response

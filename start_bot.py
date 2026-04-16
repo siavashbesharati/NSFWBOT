@@ -49,11 +49,11 @@ class BotManager:
             return True
         except ValueError as e:
             print(f"Configuration error: {e}")
-            print("Set BOT_TOKEN in environment (Railway Variables) or dashboard settings.")
+            print("Set BOT_TOKEN in dashboard settings (database) and restart.")
             return False
 
     def has_bot_token(self) -> bool:
-        """Return True when bot token is available from DB or environment."""
+        """Return True when bot token is available from database settings."""
         token = Config.get_bot_token()
         return bool(token and token.strip())
     
@@ -215,7 +215,7 @@ class BotManager:
         if self.has_bot_token():
             self.bot_thread = self.start_telegram_bot()
         else:
-            print("BOT_TOKEN not configured. Dashboard is running; set token in dashboard/env then restart.")
+            print("BOT_TOKEN not configured. Dashboard is running; set token in dashboard then restart.")
 
         return True
     

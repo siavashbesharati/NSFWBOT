@@ -1,5 +1,4 @@
 import asyncio
-import os
 from typing import Optional
 
 import requests
@@ -22,14 +21,14 @@ class VeniceAPI:
         return self.last_response_metadata
 
     def refresh_settings(self):
-        """Load key/model from DB or env; always force Venice endpoint."""
+        """Load key/model from DB only; always force Venice endpoint."""
         db_key = ""
         db_model = "venice-uncensored"
         if self.db:
             db_key = self.db.get_setting("venice_inference_key", "") or self.db.get_setting("ai_api_key", "")
             db_model = self.db.get_setting("ai_model", "venice-uncensored")
 
-        self.api_key = db_key or os.getenv("VENICE_INFERENCE_KEY", "") or os.getenv("AI_API_KEY", "")
+        self.api_key = db_key or ""
         self.model = db_model or "venice-uncensored"
         self.base_url = self.VENICE_BASE_URL
 

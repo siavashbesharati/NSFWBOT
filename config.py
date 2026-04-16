@@ -1,4 +1,3 @@
-import os
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -27,11 +26,10 @@ class Config:
 
     @classmethod
     def get_setting(cls, key: str, default: Optional[str] = None) -> Optional[str]:
-        """Fetch a configuration value from the database with optional env fallback."""
+        """Fetch a configuration value from the database only."""
         value = _get_database().get_setting(key)
         if value is None or value == '':
-            env_value = os.getenv(key.upper())
-            return env_value if env_value not in ('', None) else default
+            return default
         return value
 
     @classmethod

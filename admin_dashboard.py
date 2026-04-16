@@ -334,9 +334,9 @@ def characters():
 def create_character():
     """Create a new character"""
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        instruction = request.form['instruction']
+        name = request.form['name'].strip()
+        description = request.form['description'].strip()
+        instruction = request.form['instruction'].strip()
         is_active = 'is_active' in request.form
         
         character_id = db.create_character(name, description, instruction, is_active)
@@ -354,9 +354,9 @@ def create_character():
 def edit_character(character_id):
     """Edit an existing character"""
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        instruction = request.form['instruction']
+        name = request.form['name'].strip()
+        description = request.form['description'].strip()
+        instruction = request.form['instruction'].strip()
         is_active = 'is_active' in request.form
         
         success = db.update_character(character_id, name, description, instruction, is_active)

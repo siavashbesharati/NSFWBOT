@@ -283,6 +283,17 @@ class Database:
             cursor.execute('ALTER TABLE message_history ADD COLUMN full_response_json TEXT')  # Complete response for audit
         except sqlite3.OperationalError:
             pass
+
+        # Track conversation memory per selected character
+        try:
+            cursor.execute('ALTER TABLE message_history ADD COLUMN character_id INTEGER')
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_message_history_user_character_time ON message_history(user_id, character_id, timestamp DESC)')
+        except sqlite3.OperationalError:
+            pass
         
         # Admin settings table
         cursor.execute('''
@@ -1218,19 +1229,29 @@ class Database:
         conn.close()
         return usage
 
-    def get_conversation_history(self, user_id, limit=10):
-        """Get recent conversation history for AI context"""
+    def get_conversation_history(self, user_id, character_id=None, limit=10):
+        """Get recent conversation history for AI context (per user + character)."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT user_message, bot_response, message_type, timestamp
-            FROM message_history 
-            WHERE user_id = ? 
-            ORDER BY timestamp DESC 
-            LIMIT ?
-        ''', (user_id, limit))
+
+        if character_id is not None:
+            cursor.execute('''
+                SELECT user_message, bot_response, message_type, timestamp
+                FROM message_history
+                WHERE user_id = ? AND character_id = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            ''', (user_id, character_id, limit))
+        else:
+            # Backward compatibility for rows created before character-aware memory.
+            cursor.execute('''
+                SELECT user_message, bot_response, message_type, timestamp
+                FROM message_history
+                WHERE user_id = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            ''', (user_id, limit))
         
         history = cursor.fetchall()
         conn.close()
@@ -1267,7 +1288,7 @@ class Database:
                 'output_tokens': completion_tokens or 0
             }
 
-    def save_message_history(self, user_id, message_type, user_message, bot_response, ai_model=None, tokens_used=0, cost=0.0, context_length=0, venice_metadata=None):
+    def save_message_history(self, user_id, message_type, user_message, bot_response, ai_model=None, tokens_used=0, cost=0.0, context_length=0, venice_metadata=None, character_id=None):
         """Save message and response to history with optional Venice metadata"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -1295,14 +1316,15 @@ class Database:
             cursor.execute('''
                 INSERT INTO message_history 
                 (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length,
-                 completion_tokens, prompt_tokens, total_tokens, response_id, finish_reason, response_created,
+                 completion_tokens, prompt_tokens, total_tokens, character_id, response_id, finish_reason, response_created,
                  venice_parameters, full_response_json, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ''', (
                 user_id, message_type, user_message, bot_response, ai_model, tokens_used, calculated_cost, context_length,
                 completion_tokens,
                 prompt_tokens,
                 total_tokens,
+                character_id,
                 venice_metadata.get('id'),
                 choice.get('finish_reason'),
                 venice_metadata.get('created', 0),
@@ -1313,9 +1335,21 @@ class Database:
             # Fallback for non-Venice responses
             cursor.execute('''
                 INSERT INTO message_history 
-                (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length))
+                (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length, character_id, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (user_id, message_type, user_message, bot_response, ai_model, tokens_used, cost, context_length, character_id))
+
+        # Keep only the latest 50 history rows for each (user_id, character_id).
+        if character_id is not None:
+            cursor.execute('''
+                DELETE FROM message_history
+                WHERE user_id = ? AND character_id = ? AND id NOT IN (
+                    SELECT id FROM message_history
+                    WHERE user_id = ? AND character_id = ?
+                    ORDER BY timestamp DESC, id DESC
+                    LIMIT 50
+                )
+            ''', (user_id, character_id, user_id, character_id))
         
         conn.commit()
         conn.close()
