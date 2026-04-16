@@ -6,6 +6,10 @@ import io
 import os
 from urllib.parse import quote_plus
 
+IS_PYTHONANYWHERE = "PYTHONANYWHERE_SITE" in os.environ or "pythonanywhere" in os.environ.get("HOME", "")
+proxy_url = "http://proxy.server:3128" if IS_PYTHONANYWHERE else None
+
+
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup, 
     LabeledPrice, PreCheckoutQuery, InputFile, BotCommand
@@ -1956,10 +1960,16 @@ Use /packages to buy more credits!
                 read_timeout=30.0,            # Read timeout
                 write_timeout=30.0,           # Write timeout
                 connect_timeout=30.0,         # Connection timeout
-                pool_timeout=30.0             # Pool timeout
+                pool_timeout=30.0و             # Pool timeout
+                proxy_url=proxy_url,      # اضافه کردن پروکسی به در خواست
+                get_updates_proxy_url=proxy_url # اضافه کردن پروکسی برای دریافت آپدیت‌ها
             )
             
             self.app = Application.builder().token(bot_token).request(request).build()
+            if IS_PYTHONANYWHERE:
+                logger.info("🚀 Production Mode: PythonAnywhere Proxy Applied to HTTPXRequest")
+            else:
+                logger.info("💻 Development Mode: Direct Connection")
             
             # Add handlers
             self.app.add_handler(CommandHandler("start", self.start_command))
