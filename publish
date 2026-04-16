@@ -1,8 +1,0 @@
-#!/usr/bin/env python3
-"""Alias entry point so `python publish` runs the builder."""
-
-from publish import main
-
-
-if __name__ == "__main__":
-    main()
